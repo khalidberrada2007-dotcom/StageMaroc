@@ -1,0 +1,12 @@
+# Ignore local config containing credentials
+config.local.php
+
+# Ignore uploaded user CVs
+/uploads/cv/
+
+# Optional: IDE files
+.vscode/
+
+# OS files
+Thumbs.db
+.DS_Store

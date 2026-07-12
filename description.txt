@@ -1,0 +1,20 @@
+Prompt (Arabic Darija + French hints) — Use this prompt with an AI to generate GitHub README description and a LinkedIn post:
+
+"Ana 3andi project sghir smiytou StageMaroc. Bghitek t3tini:
+1) A short one-line GitHub description in French (max 100 chars).
+2) A concise README blurb (3 short paragraphs in French) that explains: purpose of the app, main features, technologies used (PHP, MySQL, HTML/CSS, JS), and a short 'How to run locally' section with commands.
+3) A LinkedIn post text in French (2-3 short sentences) to announce the public demo and link to repo, mention that email sending is disabled and personal data removed.
+4) A list of 6-10 keywords/tags.
+
+Constraints:
+- Tone: professional, clear, suitable for a student portfolio.
+- Length: GitHub one-liner ≤100 chars; README blurb total ≤300 words; LinkedIn post ≤40 words.
+- Do NOT include any personal contact email or secrets.
+
+Context to include if helpful:
+- Project: simple PHP/MySQL app to connect students and companies for internships.
+- Features: signup/login, publish offers, upload CV/logo, profile pages, search/annuaire, admin validation of offers.
+- Notes: Email sending disabled for public repo; remove config.local.php before push.
+
+Return the result in clear labeled sections: "GitHub Description", "README Blurb", "LinkedIn Post", "Keywords".
+"
