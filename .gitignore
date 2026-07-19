@@ -4,6 +4,13 @@ config.local.php
 # Ignore uploaded user CVs
 /uploads/cv/
 
+# Ignore uploaded company logos
+/uploads/logos/
+
+# Logs / env files
+*.log
+.env
+
 # Optional: IDE files
 .vscode/
 

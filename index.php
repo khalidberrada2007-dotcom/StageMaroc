@@ -1,25 +1,48 @@
 <?php
 include 'config.php';
 
-// Recherche
-$search = "";
+// Recherche + filtres rapides
+$search  = isset($_GET['search']) ? trim($_GET['search']) : "";
+$domaine = isset($_GET['domaine']) ? trim($_GET['domaine']) : "";
+$ville   = isset($_GET['ville']) ? trim($_GET['ville']) : "";
+
 $sql = "SELECT o.*, u.nom_entreprise FROM offres o INNER JOIN users u ON o.entreprise_id = u.id WHERE o.statut='valide' AND u.role='entreprise'";
 
-if(isset($_GET['search']) && !empty(trim($_GET['search']))){
-    $search = trim($_GET['search']);
+$types  = "";
+$params = [];
+
+if ($search !== "") {
     $sql .= " AND (o.titre LIKE ? OR o.ville LIKE ? OR o.domaine LIKE ? OR u.nom_entreprise LIKE ?)";
+    $like = "%" . $search . "%";
+    $types .= "ssss";
+    array_push($params, $like, $like, $like, $like);
+}
+
+if ($domaine !== "") {
+    $sql .= " AND o.domaine = ?";
+    $types .= "s";
+    $params[] = $domaine;
+}
+
+if ($ville !== "") {
+    $sql .= " AND o.ville = ?";
+    $types .= "s";
+    $params[] = $ville;
 }
 
 $sql .= " ORDER BY o.date_pub DESC LIMIT 6";
 $stmt = $conn->prepare($sql);
 
-if($search != ""){
-    $param = "%".$search."%";
-    $stmt->bind_param("ssss", $param, $param, $param, $param);
+if ($types !== "") {
+    $stmt->bind_param($types, ...$params);
 }
 
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Listes pour les dropdowns de filtre rapide
+$domainesList = $conn->query("SELECT DISTINCT domaine FROM offres WHERE statut='valide' AND domaine <> '' ORDER BY domaine ASC");
+$villesList   = $conn->query("SELECT DISTINCT ville FROM offres WHERE statut='valide' AND ville <> '' ORDER BY ville ASC");
 
 // Statistiques
 $totalOffres = $conn->query("SELECT COUNT(*) total FROM offres WHERE statut='valide'")->fetch_assoc()['total'];
@@ -73,9 +96,30 @@ function nav_active($page, $page_actuelle){
         <span class="eyebrow">Plateforme de stages · Maroc</span>
         <h2>Trouvez votre <em>stage idéal</em></h2>
         <p>Des centaines d'offres publiées par des entreprises marocaines, mises à jour chaque jour.</p>
-        <form method="GET">
+        <form method="GET" style="flex-wrap: wrap;">
             <label for="search" class="sr-only">Rechercher un stage</label>
             <input id="search" type="text" name="search" placeholder="Titre, ville, domaine, entreprise…" value="<?= htmlspecialchars($search); ?>">
+
+            <label for="domaine" class="sr-only">Domaine</label>
+            <select id="domaine" name="domaine">
+                <option value="">Tous les domaines</option>
+                <?php while ($d = $domainesList->fetch_assoc()): ?>
+                    <option value="<?= htmlspecialchars($d['domaine']) ?>" <?= $domaine === $d['domaine'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($d['domaine']) ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
+
+            <label for="ville" class="sr-only">Ville</label>
+            <select id="ville" name="ville">
+                <option value="">Toutes les villes</option>
+                <?php while ($v = $villesList->fetch_assoc()): ?>
+                    <option value="<?= htmlspecialchars($v['ville']) ?>" <?= $ville === $v['ville'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($v['ville']) ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
+
             <button type="submit"><i class="fa fa-search"></i> Rechercher</button>
         </form>
     </div>
@@ -91,9 +135,9 @@ function nav_active($page, $page_actuelle){
 </section>
 
 <section class="stats reveal-stagger">
-    <div class="stat reveal" style="--i:0"><h3><?= $totalOffres ?></h3><p>Offres disponibles</p></div>
-    <div class="stat reveal" style="--i:1"><h3><?= $totalEntreprises ?></h3><p>Entreprises</p></div>
-    <div class="stat reveal" style="--i:2"><h3><?= $totalEtudiants ?></h3><p>Étudiants</p></div>
+    <div class="stat reveal" style="--i:0"><i class="fa-solid fa-briefcase" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3><?= $totalOffres ?></h3><p>Offres disponibles</p></div>
+    <div class="stat reveal" style="--i:1"><i class="fa-solid fa-building" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3><?= $totalEntreprises ?></h3><p>Entreprises</p></div>
+    <div class="stat reveal" style="--i:2"><i class="fa-solid fa-user-graduate" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3><?= $totalEtudiants ?></h3><p>Étudiants</p></div>
 </section>
 
 <main id="contenu" class="container">
@@ -107,7 +151,7 @@ function nav_active($page, $page_actuelle){
         <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($row['ville']); ?></p>
         <p><span class="badge"><?= htmlspecialchars($row['domaine']); ?></span></p>
         <p>Publié le <?= date('d/m/Y',strtotime($row['date_pub'])); ?></p>
-        <a class="btn" href="detail_offre.php?id=<?= $row['id']; ?>">Voir détails</a>
+        <a class="btn" href="details_offre.php?id=<?= $row['id']; ?>">Voir détails</a>
     </div>
     <?php } ?>
     </div>
@@ -118,7 +162,7 @@ function nav_active($page, $page_actuelle){
 
 <footer>
     <span class="footer-mark">StageMaroc</span>
-    <p>© <?= date('Y'); ?> StageMaroc — Projet réalisé dans le cadre d'une formation en développement digital</p>
+    <p>© <?= date('Y'); ?> StageMaroc — Développé avec PHP, MySQL, HTML, CSS &amp; JavaScript</p>
 </footer>
 <script src="app.js"></script>
 <div id="custom-confirm-modal" class="modal-overlay">

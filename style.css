@@ -158,7 +158,9 @@ ul{ list-style: none; margin: 0; padding: 0; }
   align-items: center;
   justify-content: space-between;
   padding: 0 clamp(1.25rem, 4vw, 3rem);
-  background: var(--brand-dark);
+  background: rgba(8,46,40,.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   box-shadow: 0 1px 0 rgba(255,255,255,.06), var(--shadow-sm);
 }
 
@@ -287,6 +289,7 @@ nav a.btn-nav:hover{
   overflow: hidden;
   background: var(--brand-dark);
   color: #fff;
+  min-height: 600px;
   padding: clamp(3.5rem, 8vw, 6rem) clamp(1.25rem, 5vw, 3rem) clamp(4.5rem, 9vw, 7rem);
   display: grid;
   grid-template-columns: minmax(0,1fr) minmax(0,320px);
@@ -492,6 +495,10 @@ nav a.btn-nav:hover{
   border-color: transparent;
 }
 .card:hover::before{ transform: scaleX(1); }
+
+/* Offer cards double as links (see the "Détails" button), so hint at that with the cursor. */
+#offers-grid .card{ cursor: pointer; }
+#offers-grid .card a{ cursor: pointer; }
 
 .card h3{
   font-size: 1.2rem;
