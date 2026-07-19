@@ -120,10 +120,10 @@ if ($stmt = $conn->prepare($query)) {
 
         <div style="margin-top: 2rem; display: flex; gap: 1rem;">
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin' && $offre['statut'] !== 'valide' && $offre['statut'] !== 'refuse'): ?>
-                <a class="btn" href="details_offre.php?id=<?= $offre['id']; ?>&action=valider" style="background: var(--success);" onclick="return confirm('Valider cette offre ?');">
+                <a class="btn confirm-action" href="details_offre.php?id=<?= $offre['id']; ?>&action=valider" data-msg="Valider cette offre ? Elle sera publiée sur le site." style="background: var(--success);">
                     <i class="fa-solid fa-check"></i> Valider l'offre
                 </a>
-                <a class="btn" href="details_offre.php?id=<?= $offre['id']; ?>&action=refuser" style="background: var(--danger);" onclick="return confirm('Refuser cette offre ? Elle ne sera pas publiée.');">
+                <a class="btn confirm-action" href="details_offre.php?id=<?= $offre['id']; ?>&action=refuser" data-msg="Refuser cette offre ? Elle ne sera pas publiée." style="background: var(--danger);">
                     <i class="fa-solid fa-xmark"></i> Refuser l'offre
                 </a>
             <?php endif; ?>

@@ -31,6 +31,8 @@ if (isset($_POST['submit'])) {
 
     if (empty($titre) || empty($description) || empty($ville) || empty($domaine) || empty($type_stage) || empty($duree) || empty($date_limite)) {
         $error = "Veuillez remplir tous les champs.";
+    } elseif (strtotime($date_limite) < strtotime('today')) {
+        $error = "La date limite ne peut pas être dans le passé. Merci de choisir une date à partir d'aujourd'hui.";
     } else {
         $stmt = $conn->prepare("INSERT INTO offres (titre, description, ville, domaine, type_stage, duree, date_limite, entreprise_id, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')");
         $stmt->bind_param("sssssssi", $titre, $description, $ville, $domaine, $type_stage, $duree, $date_limite, $entreprise_id);
@@ -151,7 +153,7 @@ function toggleCustomDuree(select) {
 </script>
 
         <label for="date_limite">Date limite</label>
-        <input id="date_limite" type="date" name="date_limite" required>
+        <input id="date_limite" type="date" name="date_limite" min="<?= date('Y-m-d') ?>" required>
 
         <button type="submit" name="submit" class="btn">Publier l'offre</button>
     </form>

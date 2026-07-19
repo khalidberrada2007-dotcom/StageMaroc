@@ -104,12 +104,12 @@ if (!function_exists('nav_active')) {
                         </a>
 
                         <!-- Bouton Valider direct -->
-                        <a class="btn" href="admin_validation.php?action=valider&id=<?= $row['id']; ?>" style="background: var(--success); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;" onclick="return confirm('Valider cette offre ?');">
+                        <a class="btn confirm-action" href="admin_validation.php?action=valider&id=<?= $row['id']; ?>" data-msg="Valider cette offre ? Elle sera publiée sur le site." style="background: var(--success); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;">
                             <i class="fa-solid fa-check"></i> Valider
                         </a>
 
                         <!-- Bouton Refuser direct -->
-                        <a class="btn" href="admin_validation.php?action=refuser&id=<?= $row['id']; ?>" style="background: var(--danger); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;" onclick="return confirm('Refuser cette offre ? Elle ne sera pas publiée.');">
+                        <a class="btn confirm-action" href="admin_validation.php?action=refuser&id=<?= $row['id']; ?>" data-msg="Refuser cette offre ? Elle ne sera pas publiée." style="background: var(--danger); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;">
                             <i class="fa-solid fa-xmark"></i> Refuser
                         </a>
                     </div>
