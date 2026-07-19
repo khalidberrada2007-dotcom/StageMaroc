@@ -135,9 +135,9 @@ function nav_active($page, $page_actuelle){
 </section>
 
 <section class="stats reveal-stagger">
-    <div class="stat reveal" style="--i:0"><i class="fa-solid fa-briefcase" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3><?= $totalOffres ?></h3><p>Offres disponibles</p></div>
-    <div class="stat reveal" style="--i:1"><i class="fa-solid fa-building" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3><?= $totalEntreprises ?></h3><p>Entreprises</p></div>
-    <div class="stat reveal" style="--i:2"><i class="fa-solid fa-user-graduate" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3><?= $totalEtudiants ?></h3><p>Étudiants</p></div>
+    <div class="stat reveal" style="--i:0"><i class="fa-solid fa-briefcase" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3 data-count="<?= $totalOffres ?>"><?= $totalOffres ?></h3><p>Offres disponibles</p></div>
+    <div class="stat reveal" style="--i:1"><i class="fa-solid fa-building" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3 data-count="<?= $totalEntreprises ?>"><?= $totalEntreprises ?></h3><p>Entreprises</p></div>
+    <div class="stat reveal" style="--i:2"><i class="fa-solid fa-user-graduate" style="color: var(--gold); font-size: 1.4rem; margin-bottom: 0.4rem;"></i><h3 data-count="<?= $totalEtudiants ?>"><?= $totalEtudiants ?></h3><p>Étudiants</p></div>
 </section>
 
 <main id="contenu" class="container">
