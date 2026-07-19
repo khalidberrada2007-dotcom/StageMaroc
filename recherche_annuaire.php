@@ -81,7 +81,7 @@ function nav_active($page, $page_actuelle){
                 <option value="entreprise" <?= $role_filter === 'entreprise' ? 'selected' : '' ?>>Entreprises</option>
             </select>
         </div>
-        <button type="submit" class="btn" style="margin-top: 0; height: 48px; align-self: flex-end; background: var(--brand);">Filtrer</button>
+        <button type="submit" class="btn" style="margin-top: 0; height: 48px; align-self: flex-end;">Filtrer</button>
     </form>
 
     <div id="offers-grid" style="margin-top: 2rem;">
@@ -93,7 +93,7 @@ function nav_active($page, $page_actuelle){
                         <p class="badge" style="background: #eef7f4; color: var(--brand);">Étudiant</p>
                         <p><i class="fa-solid fa-location-dot"></i> Ville : <?= htmlspecialchars($row['ville']) ?></p>
                         <?php if(!empty($row['cv'])): ?>
-                            <a href="<?= htmlspecialchars($row['cv']) ?>" target="_blank" class="btn" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; background: var(--gold); color: black;"><i class="fa-solid fa-file-pdf"></i> Voir CV</a>
+                            <a href="<?= htmlspecialchars($row['cv']) ?>" target="_blank" class="btn btn-gold btn-sm"><i class="fa-solid fa-file-pdf"></i> Voir CV</a>
                         <?php endif; ?>
                     <?php else: ?>
                         <h3 style="color: var(--brand-dark);"><i class="fa-solid fa-building" style="color: var(--gold);"></i> <?= htmlspecialchars($row['nom_entreprise']) ?></h3>

@@ -234,6 +234,8 @@ nav a.btn-nav:hover{
   color: var(--brand-dark);
   transform: translateY(-1px);
 }
+nav a.btn-nav.btn-nav-danger{ background: var(--terracotta); color: #fff; }
+nav a.btn-nav.btn-nav-danger:hover{ background: #fff; color: var(--terracotta); }
 
 .nav-toggle{
   display: none;
@@ -343,7 +345,9 @@ nav a.btn-nav:hover{
   border-radius: var(--radius-lg);
   max-width: 560px;
   animation: hero-rise .8s var(--ease) .12s both;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
+.hero form:hover{ border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.09); }
 .hero form input[type="text"]{
   flex: 1;
   border: none;
@@ -354,10 +358,28 @@ nav a.btn-nav:hover{
   border-radius: var(--radius-md);
 }
 .hero form input[type="text"]::placeholder{ color: rgba(255,255,255,.5); }
+.hero form input[type="text"]:hover{ background: rgba(255,255,255,.06); }
 .hero form input[type="text"]:focus{
   outline: none;
   background: rgba(255,255,255,.08);
 }
+.hero form select{
+  flex: 0 1 150px;
+  border: 1px solid rgba(255,255,255,.16);
+  background-color: rgba(255,255,255,.06);
+  color: #fff;
+  padding: .75rem .9rem;
+  font-size: .85rem;
+  border-radius: var(--radius-md);
+  background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,.65) 50%), linear-gradient(135deg, rgba(255,255,255,.65) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.hero form select option{ color: var(--ink); }
+.hero form select:hover{ background-color: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); }
+.hero form select:focus{ outline: none; background-color: rgba(255,255,255,.14); border-color: var(--gold); }
 .hero form button{
   display: inline-flex;
   align-items: center;
@@ -368,10 +390,10 @@ nav a.btn-nav:hover{
   padding: .75rem 1.4rem;
   font-weight: 600;
   border-radius: var(--radius-md);
-  transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
   white-space: nowrap;
 }
-.hero form button:hover{ background: #fff; transform: translateY(-1px); }
+.hero form button:hover{ background: #fff; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 .hero-motif{
   justify-self: end;
@@ -529,7 +551,10 @@ nav a.btn-nav:hover{
   padding: .3rem .65rem;
   border-radius: 999px;
   font-weight: 600;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
 }
+a .badge, a.badge{ transition: background var(--fast) var(--ease), color var(--fast) var(--ease), transform var(--fast) var(--ease); }
+a:hover .badge, a.badge:hover{ background: var(--brand); color: #fff; transform: translateY(-1px); }
 
 .btn{
   display: inline-flex;
@@ -543,7 +568,7 @@ nav a.btn-nav:hover{
   font-weight: 600;
   font-size: .92rem;
   border: none;
-  transition: background var(--fast) var(--ease), transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease), filter var(--fast) var(--ease);
 }
 .btn::after{
   content: "\2192";
@@ -555,6 +580,22 @@ nav a.btn-nav:hover{
   box-shadow: var(--shadow-sm);
 }
 .btn:hover::after{ transform: translateX(3px); }
+
+/* Variantes sémantiques — utilisées à la place des couleurs en inline
+   pour que le survol (hover) fonctionne réellement (un style inline
+   écrase toujours .btn:hover, d'où les boutons "morts" au survol). */
+.btn-success{ background: var(--success); }
+.btn-danger{ background: var(--danger); }
+.btn-gold{ background: var(--gold); color: var(--brand-dark); }
+.btn-muted{ background: #6c757d; }
+.btn-success:hover{ filter: brightness(1.1); }
+.btn-danger:hover{ filter: brightness(1.1); }
+.btn-gold:hover{ background: var(--gold-dark); color: #fff; }
+.btn-muted:hover{ background: #565e64; }
+
+.btn-sm{ padding: .4rem .8rem; font-size: .8rem; margin-top: 0; }
+.btn-sm::after{ content: none; }
+.btn-block{ flex: 1; min-width: 100px; justify-content: center; text-align: center; }
 
 .empty{
   text-align: center;
@@ -590,7 +631,11 @@ label{
 }
 
 input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
 input[type="date"],
+input[type="file"],
 textarea,
 select{
   width: 100%;
@@ -602,6 +647,10 @@ select{
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
 textarea{ resize: vertical; min-height: 120px; }
+
+input:hover, textarea:hover, select:hover{
+  border-color: var(--brand);
+}
 
 input:focus, textarea:focus, select:focus{
   outline: none;
@@ -652,6 +701,7 @@ footer .footer-mark{ color: var(--gold); font-family: var(--font-mono); font-siz
    ===================================================================== */
 @media (max-width: 480px){
   .hero form{ flex-direction: column; }
+  .hero form select{ flex: 1; width: 100%; }
   .hero form button{ justify-content: center; }
   .container{ padding-top: 4rem; }
 }

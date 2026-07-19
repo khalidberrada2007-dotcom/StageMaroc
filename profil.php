@@ -89,7 +89,7 @@ function nav_active($page, $page_actuelle){
             <div>
                 <p><b><i class="fa-solid fa-file-pdf" style="color: var(--terracotta);"></i> Mon CV :</b> 
                     <?php if(!empty($user['cv'])): ?>
-                        <a href="<?= htmlspecialchars($user['cv']) ?>" target="_blank" class="badge" style="background: var(--brand-light); color: var(--brand-600); text-decoration: underline;">Voir le CV PDF</a>
+                        <a href="<?= htmlspecialchars($user['cv']) ?>" target="_blank" class="badge" style="text-decoration: underline;">Voir le CV PDF</a>
                     <?php else: ?>
                         <span style="color: var(--muted); font-style: italic;">Aucun CV téléversé</span>
                     <?php endif; ?>

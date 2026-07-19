@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="password" id="password" name="password" required style="width: 100%; padding: 0.7rem; margin-top: 0.3rem;">
             </div>
             
-            <button type="submit" class="btn" style="width: 100%; background: var(--brand); color: white; padding: 0.8rem;">Se connecter</button>
+            <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 0.8rem;">Se connecter</button>
         </form>
         
         <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem;">

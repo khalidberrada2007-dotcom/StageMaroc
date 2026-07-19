@@ -68,7 +68,7 @@ if (!function_exists('nav_active')) {
         <a href="index.php"<?= nav_active('index.php', $page_actuelle) ?>>Accueil</a>
         <a href="admin_validation.php"<?= nav_active('admin_validation.php', $page_actuelle) ?>>Validation Offres</a>
         <a href="profil.php"<?= nav_active('profil.php', $page_actuelle) ?>><i class="fa-solid fa-user"></i> Mon Profil</a>
-        <a href="deconnexion.php" class="confirm-action btn-nav" data-msg="Êtes-vous sûr de vouloir vous déconnecter ?" style="background: var(--terracotta); color: white;">Déconnexion</a>
+        <a href="deconnexion.php" class="confirm-action btn-nav btn-nav-danger" data-msg="Êtes-vous sûr de vouloir vous déconnecter ?">Déconnexion</a>
     </nav>
 </header>
 
@@ -99,17 +99,17 @@ if (!function_exists('nav_active')) {
                     
                     <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <!-- Bouton Voir Détails -->
-                        <a class="btn" href="details_offre.php?id=<?= $row['id']; ?>" style="background: var(--brand); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;">
+                        <a class="btn btn-block" href="details_offre.php?id=<?= $row['id']; ?>">
                             <i class="fa-solid fa-eye"></i> Détails
                         </a>
 
                         <!-- Bouton Valider direct -->
-                        <a class="btn confirm-action" href="admin_validation.php?action=valider&id=<?= $row['id']; ?>" data-msg="Valider cette offre ? Elle sera publiée sur le site." style="background: var(--success); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;">
+                        <a class="btn btn-success btn-block confirm-action" href="admin_validation.php?action=valider&id=<?= $row['id']; ?>" data-msg="Valider cette offre ? Elle sera publiée sur le site.">
                             <i class="fa-solid fa-check"></i> Valider
                         </a>
 
                         <!-- Bouton Refuser direct -->
-                        <a class="btn confirm-action" href="admin_validation.php?action=refuser&id=<?= $row['id']; ?>" data-msg="Refuser cette offre ? Elle ne sera pas publiée." style="background: var(--danger); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;">
+                        <a class="btn btn-danger btn-block confirm-action" href="admin_validation.php?action=refuser&id=<?= $row['id']; ?>" data-msg="Refuser cette offre ? Elle ne sera pas publiée.">
                             <i class="fa-solid fa-xmark"></i> Refuser
                         </a>
                     </div>
