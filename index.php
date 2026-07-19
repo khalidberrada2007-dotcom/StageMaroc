@@ -6,7 +6,7 @@ $search  = isset($_GET['search']) ? trim($_GET['search']) : "";
 $domaine = isset($_GET['domaine']) ? trim($_GET['domaine']) : "";
 $ville   = isset($_GET['ville']) ? trim($_GET['ville']) : "";
 
-$sql = "SELECT o.*, u.nom_entreprise FROM offres o INNER JOIN users u ON o.entreprise_id = u.id WHERE o.statut='valide' AND u.role='entreprise'";
+$sql = "SELECT o.*, u.nom_entreprise FROM offres o INNER JOIN users u ON o.entreprise_id = u.id WHERE o.statut='valide' AND u.role='entreprise' AND (o.date_limite IS NULL OR o.date_limite >= CURDATE())";
 
 $types  = "";
 $params = [];
@@ -40,12 +40,12 @@ if ($types !== "") {
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Listes pour les dropdowns de filtre rapide
-$domainesList = $conn->query("SELECT DISTINCT domaine FROM offres WHERE statut='valide' AND domaine <> '' ORDER BY domaine ASC");
-$villesList   = $conn->query("SELECT DISTINCT ville FROM offres WHERE statut='valide' AND ville <> '' ORDER BY ville ASC");
+// Listes pour les dropdowns de filtre rapide (offres actives uniquement)
+$domainesList = $conn->query("SELECT DISTINCT domaine FROM offres WHERE statut='valide' AND domaine <> '' AND (date_limite IS NULL OR date_limite >= CURDATE()) ORDER BY domaine ASC");
+$villesList   = $conn->query("SELECT DISTINCT ville FROM offres WHERE statut='valide' AND ville <> '' AND (date_limite IS NULL OR date_limite >= CURDATE()) ORDER BY ville ASC");
 
 // Statistiques
-$totalOffres = $conn->query("SELECT COUNT(*) total FROM offres WHERE statut='valide'")->fetch_assoc()['total'];
+$totalOffres = $conn->query("SELECT COUNT(*) total FROM offres WHERE statut='valide' AND (date_limite IS NULL OR date_limite >= CURDATE())")->fetch_assoc()['total'];
 $totalEntreprises = $conn->query("SELECT COUNT(*) total FROM users WHERE role='entreprise'")->fetch_assoc()['total'];
 $totalEtudiants = $conn->query("SELECT COUNT(*) total FROM users WHERE role='etudiant'")->fetch_assoc()['total'];
 
@@ -141,22 +141,34 @@ function nav_active($page, $page_actuelle){
 </section>
 
 <main id="contenu" class="container">
-    <h2>Dernières offres</h2>
+    <div style="text-align: center; max-width: 560px; margin: 0 auto 2.5rem;">
+        <span class="eyebrow" style="color: var(--brand);">Fraîchement publiées</span>
+        <h2 style="margin-bottom: 0.4rem;">Dernières offres</h2>
+        <p style="color: var(--muted);">Une sélection des stages les plus récents, validés par notre équipe.</p>
+    </div>
     <?php if($result->num_rows>0){ ?>
     <div id="offers-grid" class="reveal-stagger">
     <?php $i = 0; while($row=$result->fetch_assoc()){ ?>
     <div class="card reveal" style="--i:<?= $i++ ?>">
         <h3><?= htmlspecialchars($row['titre']); ?></h3>
-        <p><b>Entreprise :</b> <?= htmlspecialchars($row['nom_entreprise']); ?></p>
+        <p><i class="fa-solid fa-building" style="color: var(--gold-dark);"></i> <b><?= htmlspecialchars($row['nom_entreprise']); ?></b></p>
         <p><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($row['ville']); ?></p>
         <p><span class="badge"><?= htmlspecialchars($row['domaine']); ?></span></p>
-        <p>Publié le <?= date('d/m/Y',strtotime($row['date_pub'])); ?></p>
+        <p style="font-size: 0.85rem; color: var(--muted);">
+            <i class="fa-solid fa-calendar-days"></i> Publié le <?= date('d/m/Y',strtotime($row['date_pub'])); ?>
+            <?php if (!empty($row['date_limite'])): ?>
+                &nbsp;·&nbsp;<i class="fa-solid fa-hourglass-half"></i> Candidatez avant le <?= date('d/m/Y', strtotime($row['date_limite'])); ?>
+            <?php endif; ?>
+        </p>
         <a class="btn" href="details_offre.php?id=<?= $row['id']; ?>">Voir détails</a>
     </div>
     <?php } ?>
     </div>
     <?php } else { ?>
-    <p class="empty">Aucune offre ne correspond à votre recherche pour le moment.</p>
+    <div class="card" style="text-align: center; padding: 3rem 2rem;">
+        <i class="fa-solid fa-inbox" style="font-size: 2rem; color: var(--muted); margin-bottom: 0.8rem; display: block;"></i>
+        <p class="empty">Aucune offre ne correspond à votre recherche pour le moment.</p>
+    </div>
     <?php } ?>
 </main>
 

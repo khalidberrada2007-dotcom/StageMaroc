@@ -15,18 +15,20 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Traitement de la validation direct
-if (isset($_GET['action']) && $_GET['action'] === 'valider' && isset($_GET['id'])) {
+// Traitement de la validation ou du refus direct
+if (isset($_GET['action']) && in_array($_GET['action'], ['valider', 'refuser']) && isset($_GET['id'])) {
     $id_offre = intval($_GET['id']);
-    
-    $stmt = $conn->prepare("UPDATE offres SET statut = 'valide' WHERE id = ?");
-    $stmt->bind_param("i", $id_offre);
-    
+    $nouveau_statut = $_GET['action'] === 'valider' ? 'valide' : 'refuse';
+
+    $stmt = $conn->prepare("UPDATE offres SET statut = ? WHERE id = ?");
+    $stmt->bind_param("si", $nouveau_statut, $id_offre);
+
     if ($stmt->execute()) {
-        header("Location: admin_validation.php?success=1");
+        $param_succes = $_GET['action'] === 'valider' ? 'success=1' : 'refused=1';
+        header("Location: admin_validation.php?" . $param_succes);
         exit();
     } else {
-        die("Erreur lors de la validation : " . $conn->error);
+        die("Erreur lors du traitement : " . $conn->error);
     }
 }
 
@@ -77,6 +79,10 @@ if (!function_exists('nav_active')) {
         <div class="success"><i class="fa-solid fa-circle-check"></i> L'offre a été validée avec succès et est en ligne !</div>
     <?php endif; ?>
 
+    <?php if(isset($_GET['refused'])): ?>
+        <div class="error"><i class="fa-solid fa-circle-xmark"></i> L'offre a été refusée. Elle ne sera pas publiée.</div>
+    <?php endif; ?>
+
     <?php if($result->num_rows > 0): ?>
         <div id="offers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
             <?php while($row = $result->fetch_assoc()): ?>
@@ -91,15 +97,20 @@ if (!function_exists('nav_active')) {
                         </p>
                     </div>
                     
-                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <!-- Bouton Voir Détails -->
-                        <a class="btn" href="details_offre.php?id=<?= $row['id']; ?>" style="background: var(--brand); flex: 1; text-align: center; color: white; padding: 0.5rem;">
+                        <a class="btn" href="details_offre.php?id=<?= $row['id']; ?>" style="background: var(--brand); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;">
                             <i class="fa-solid fa-eye"></i> Détails
                         </a>
-                        
+
                         <!-- Bouton Valider direct -->
-                        <a class="btn" href="admin_validation.php?action=valider&id=<?= $row['id']; ?>" style="background: var(--success); flex: 1; text-align: center; color: white; padding: 0.5rem;" onclick="return confirm('Valider cette offre ?');">
+                        <a class="btn" href="admin_validation.php?action=valider&id=<?= $row['id']; ?>" style="background: var(--success); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;" onclick="return confirm('Valider cette offre ?');">
                             <i class="fa-solid fa-check"></i> Valider
+                        </a>
+
+                        <!-- Bouton Refuser direct -->
+                        <a class="btn" href="admin_validation.php?action=refuser&id=<?= $row['id']; ?>" style="background: var(--danger); flex: 1; min-width: 100px; text-align: center; color: white; padding: 0.5rem;" onclick="return confirm('Refuser cette offre ? Elle ne sera pas publiée.');">
+                            <i class="fa-solid fa-xmark"></i> Refuser
                         </a>
                     </div>
                 </div>

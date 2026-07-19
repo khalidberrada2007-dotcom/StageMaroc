@@ -298,7 +298,7 @@ nav a.btn-nav:hover{
 }
 
 .hero-content{ max-width: 640px; animation: hero-rise .8s var(--ease) both; }
-.hero-content .eyebrow{
+.eyebrow{
   display: inline-flex;
   align-items: center;
   gap: .5rem;
@@ -306,14 +306,16 @@ nav a.btn-nav:hover{
   font-size: .74rem;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--brand);
   margin-bottom: 1rem;
 }
-.hero-content .eyebrow::before{
+.eyebrow::before{
   content: "";
   width: 22px; height: 1px;
-  background: var(--gold);
+  background: var(--brand);
 }
+.hero-content .eyebrow{ color: var(--gold); }
+.hero-content .eyebrow::before{ background: var(--gold); }
 
 .hero h2{
   color: #fff;

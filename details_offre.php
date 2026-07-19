@@ -16,13 +16,15 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $offre_id = intval($_GET['id']);
 
-// Action de validation directe depuis les détails (si c'est l'admin)
-if (isset($_GET['action']) && $_GET['action'] === 'valider' && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-    $stmt = $conn->prepare("UPDATE offres SET statut = 'valide' WHERE id = ?");
-    $stmt->bind_param("i", $offre_id);
+// Action de validation ou de refus depuis les détails (si c'est l'admin)
+if (isset($_GET['action']) && in_array($_GET['action'], ['valider', 'refuser']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    $nouveau_statut = $_GET['action'] === 'valider' ? 'valide' : 'refuse';
+    $stmt = $conn->prepare("UPDATE offres SET statut = ? WHERE id = ?");
+    $stmt->bind_param("si", $nouveau_statut, $offre_id);
     $stmt->execute();
     $stmt->close();
-    header("Location: admin_validation.php?success=1");
+    $param_succes = $_GET['action'] === 'valider' ? 'success=1' : 'refused=1';
+    header("Location: admin_validation.php?" . $param_succes);
     exit();
 }
 
@@ -93,9 +95,21 @@ if ($stmt = $conn->prepare($query)) {
             <p><i class="fa-solid fa-location-dot" style="color: var(--brand);"></i> <strong>Ville :</strong> <?= htmlspecialchars($offre['ville']) ?></p>
             <p><i class="fa-solid fa-calendar-days" style="color: var(--brand);"></i> <strong>Date :</strong> <?= htmlspecialchars($offre['date_pub']) ?></p>
             <p><i class="fa-solid fa-circle-info" style="color: var(--brand);"></i> <strong>Statut :</strong> 
-                <span style="font-weight: bold; color: <?= $offre['statut'] === 'valide' ? 'var(--success)' : 'var(--gold-dark)' ?>;">
-                    <?= $offre['statut'] === 'valide' ? 'En ligne' : 'En attente' ?>
+                <?php
+                    $statut_labels = [
+                        'valide'  => ['En ligne', 'var(--success)'],
+                        'refuse'  => ['Refusée', 'var(--danger)'],
+                    ];
+                    [$statut_label, $statut_color] = $statut_labels[$offre['statut']] ?? ['En attente', 'var(--gold-dark)'];
+                ?>
+                <span style="font-weight: bold; color: <?= $statut_color ?>;">
+                    <?= $statut_label ?>
                 </span>
+                <?php if (!empty($offre['date_limite']) && strtotime($offre['date_limite']) < strtotime('today')): ?>
+                    <span class="badge" style="background: var(--danger-bg); color: var(--danger); margin-left: 0.5rem;">
+                        <i class="fa-solid fa-clock"></i> Date limite dépassée
+                    </span>
+                <?php endif; ?>
             </p>
         </div>
 
@@ -105,9 +119,12 @@ if ($stmt = $conn->prepare($query)) {
         </p>
 
         <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin' && $offre['statut'] === 'en_attente'): ?>
-                <a class="btn" href="details_offre.php?id=<?= $offre['id']; ?>&action=valider" style="background: var(--success);">
+            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin' && $offre['statut'] !== 'valide' && $offre['statut'] !== 'refuse'): ?>
+                <a class="btn" href="details_offre.php?id=<?= $offre['id']; ?>&action=valider" style="background: var(--success);" onclick="return confirm('Valider cette offre ?');">
                     <i class="fa-solid fa-check"></i> Valider l'offre
+                </a>
+                <a class="btn" href="details_offre.php?id=<?= $offre['id']; ?>&action=refuser" style="background: var(--danger);" onclick="return confirm('Refuser cette offre ? Elle ne sera pas publiée.');">
+                    <i class="fa-solid fa-xmark"></i> Refuser l'offre
                 </a>
             <?php endif; ?>
             
