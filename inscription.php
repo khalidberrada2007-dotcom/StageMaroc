@@ -27,9 +27,14 @@ if (isset($_POST['submit'])) {
     $nom    = trim($_POST['nom'] ?? '');
     $prenom = trim($_POST['prenom'] ?? '');
 
-    // Champs entreprise
+// Champs entreprise
     $nom_entreprise = trim($_POST['nom_entreprise'] ?? '');
     $secteur        = trim($_POST['secteur'] ?? '');
+    $secteur_autre  = trim($_POST['secteur_autre'] ?? '');
+    // Si l'utilisateur a choisi "Autre", on utilise la valeur saisie
+    if ($secteur === 'autre') {
+        $secteur = $secteur_autre;
+    }
     $description    = trim($_POST['description'] ?? '');
 
     // Le contact d'une entreprise est saisi dans un champ séparé (évite le conflit avec le nom étudiant)
@@ -221,8 +226,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 </div>
 <?php } ?>
 
-?>
-
 <?php if($error!=""){ ?>
 <div class="error"><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?></div>
 <?php } ?>
@@ -262,18 +265,31 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     <label for="nom_entreprise">Nom de l'entreprise</label>
     <input id="nom_entreprise" type="text" name="nom_entreprise" placeholder="Raison sociale">
 
-    <label for="secteur">Secteur d'activité</label>
+        <label for="secteur">Secteur d'activité</label>
     <select id="secteur" name="secteur">
         <option value="">Choisir</option>
-        <option>Développement Web</option>
-        <option>Développement Mobile</option>
-        <option>Cybersécurité</option>
-        <option>Data Science</option>
-        <option>Marketing Digital</option>
-        <option>Finance</option>
-        <option>Réseaux</option>
-        <option>Gestion</option>
+        <option value="Développement Web"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Développement Web')?' selected':'' ?>>Développement Web</option>
+        <option value="Développement Mobile"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Développement Mobile')?' selected':'' ?>>Développement Mobile</option>
+        <option value="Cybersécurité"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Cybersécurité')?' selected':'' ?>>Cybersécurité</option>
+        <option value="Data Science"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Data Science')?' selected':'' ?>>Data Science</option>
+        <option value="Marketing Digital"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Marketing Digital')?' selected':'' ?>>Marketing Digital</option>
+        <option value="Finance"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Finance')?' selected':'' ?>>Finance</option>
+        <option value="Comptabilité"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Comptabilité')?' selected':'' ?>>Comptabilité</option>
+        <option value="Ressources Humaines"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Ressources Humaines')?' selected':'' ?>>Ressources Humaines</option>
+        <option value="Commerce"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Commerce')?' selected':'' ?>>Commerce</option>
+        <option value="Logistique"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Logistique')?' selected':'' ?>>Logistique</option>
+        <option value="Santé"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Santé')?' selected':'' ?>>Santé</option>
+        <option value="Éducation"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Éducation')?' selected':'' ?>>Éducation</option>
+        <option value="Design"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Design')?' selected':'' ?>>Design</option>
+        <option value="Tourisme"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Tourisme')?' selected':'' ?>>Tourisme</option>
+        <option value="Réseaux"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Réseaux')?' selected':'' ?>>Réseaux</option>
+        <option value="Gestion"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Gestion')?' selected':'' ?>>Gestion</option>
+        <option value="autre"<?= (isset($_POST['secteur']) && $_POST['secteur']==='autre')?' selected':'' ?>>Autre (à préciser)</option>
     </select>
+    <div id="champ-secteur-autre" style="display:<?= (isset($_POST['secteur']) && $_POST['secteur']==='autre')?'block':'none' ?>; margin-top: .5rem;">
+        <label for="secteur_autre">Précisez votre secteur</label>
+        <input id="secteur_autre" type="text" name="secteur_autre" placeholder="ex: Agriculture, Industrie..." value="<?= htmlspecialchars($_POST['secteur_autre']??'') ?>">
+    </div>
 
     <label for="description">Description de l'entreprise</label>
     <textarea id="description" name="description" rows="4" placeholder="Quelques mots sur votre entreprise…"></textarea>
@@ -328,6 +344,17 @@ Déjà inscrit ?
     }
     radios.forEach(function(r){ r.addEventListener('change', toggle); });
     toggle();
+
+    // Toggle champ secteur "Autre"
+    var secteurSelect = document.getElementById('secteur');
+    var champSecteurAutre = document.getElementById('champ-secteur-autre');
+    if (secteurSelect && champSecteurAutre) {
+        function toggleSecteurAutre() {
+            champSecteurAutre.style.display = (secteurSelect.value === 'autre') ? 'block' : 'none';
+        }
+        secteurSelect.addEventListener('change', toggleSecteurAutre);
+        toggleSecteurAutre();
+    }
 })();
 </script>
 

@@ -64,6 +64,9 @@ if (!function_exists('nav_active')) {
         <h1>StageMaroc</h1>
         <span class="logo-tag">Espace Modérateur</span>
     </div>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+    </button>
     <nav id="primary-nav">
         <a href="index.php"<?= nav_active('index.php', $page_actuelle) ?>>Accueil</a>
         <a href="admin_validation.php"<?= nav_active('admin_validation.php', $page_actuelle) ?>>Validation Offres</a>

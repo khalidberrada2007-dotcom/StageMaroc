@@ -109,6 +109,14 @@ if (!function_exists('nav_active')) {
             <option>Data Science</option>
             <option>Marketing Digital</option>
             <option>Finance</option>
+            <option>Comptabilité</option>
+            <option>Ressources Humaines</option>
+            <option>Commerce</option>
+            <option>Logistique</option>
+            <option>Santé</option>
+            <option>Éducation</option>
+            <option>Design</option>
+            <option>Tourisme</option>
             <option>Réseaux</option>
             <option>Gestion</option>
         </select>

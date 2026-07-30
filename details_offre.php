@@ -64,7 +64,11 @@ if ($stmt = $conn->prepare($query)) {
     <div class="logo">
         <span class="logo-mark"><i class="fa-solid fa-graduation-cap"></i></span>
         <h1>StageMaroc</h1>
+        <span class="logo-tag">Étudiants × Entreprises</span>
     </div>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+    </button>
     <nav id="primary-nav">
         <a href="index.php">Accueil</a>
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
