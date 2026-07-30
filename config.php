@@ -3,24 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Créez une copie de config.example.php nommée config.local.php
-// et définissez-y vos identifiants de connexion à la base de données.
-$localConfig = __DIR__ . '/config.local.php';
-if (!file_exists($localConfig)) {
-    die("Missing local configuration. Copy config.example.php to config.local.php and set database credentials.");
-}
-
-include $localConfig;
-
-/* Port par défaut si non défini dans config.local.php */
-if (!isset($port)) {
-    $port = 3306;
-}
-
-/* Vérification des variables attendues */
-if (!isset($host, $user, $pass, $db)) {
-    die("Local configuration invalid: please set \$host, \$user, \$pass and \$db in config.local.php");
-}
+$host = getenv('MYSQL_ADDON_HOST') ?: 'localhost';
+$user = getenv('MYSQL_ADDON_USER') ?: 'root';
+$pass = getenv('MYSQL_ADDON_PASSWORD') ?: '';
+$db   = getenv('MYSQL_ADDON_DB') ?: 'stagemaroc';
+$port = getenv('MYSQL_ADDON_PORT') ?: 3306;
 
 /* Connexion */
 $conn = new mysqli($host, $user, $pass, $db, $port);
