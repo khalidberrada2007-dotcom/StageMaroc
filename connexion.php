@@ -107,13 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 0.8rem;">Se connecter</button>
         </form>
 
-        <p style="text-align: center; margin-top: 0.8rem; font-size: 0.85rem;">
-            <a href="mdp_oublie.php" style="color: var(--muted); text-decoration: underline;">
-                <i class="fa-solid fa-key"></i> Mot de passe oublié ?
-            </a>
-        </p>
-        
-        <p style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem;">
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem;">
             Vous n'avez pas de compte ? <a href="inscription.php">Inscrivez-vous</a>
         </p>
     </div>

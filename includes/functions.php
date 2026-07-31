@@ -5,21 +5,6 @@
  */
 
 /**
- * Génère un code aléatoire sécurisé à N chiffres.
- *
- * @param int $length Nombre de chiffres (défaut: 6)
- * @return string Code numérique
- */
-function generateNumericCode(int $length = 6): string
-{
-    $code = '';
-    for ($i = 0; $i < $length; $i++) {
-        $code .= random_int(0, 9);
-    }
-    return $code;
-}
-
-/**
  * Vérifie que l'utilisateur est connecté. Redirige vers connexion.php si non connecté.
  */
 function requireLogin(): void
@@ -91,24 +76,6 @@ function getFlash(): ?array
 function e(?string $value): string
 {
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Vérifie si une adresse e-mail existe déjà dans la base.
- *
- * @param mysqli $conn Connexion MySQLi
- * @param string $email Adresse e-mail à vérifier
- * @return bool True si l'email existe déjà
- */
-function emailExists(mysqli $conn, string $email): bool
-{
-    $stmt = $conn->prepare('SELECT id FROM users WHERE email = ?');
-    $stmt->bind_param('s', $email);
-    $stmt->execute();
-    $stmt->store_result();
-    $exists = $stmt->num_rows > 0;
-    $stmt->close();
-    return $exists;
 }
 
 /**
