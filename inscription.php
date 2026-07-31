@@ -1,10 +1,7 @@
 <?php
 include 'config.php';
-
-function sendWelcomeEmail($toEmail, $toName)
-{
-    return false;
-}
+require_once 'includes/functions.php';
+require_once 'includes/mail_config.php';
 
 if (isset($_SESSION['entreprise_id']) || isset($_SESSION['etudiant_id'])) {
     header("Location: index.php");
@@ -27,7 +24,7 @@ if (isset($_POST['submit'])) {
     $nom    = trim($_POST['nom'] ?? '');
     $prenom = trim($_POST['prenom'] ?? '');
 
-// Champs entreprise
+    // Champs entreprise
     $nom_entreprise = trim($_POST['nom_entreprise'] ?? '');
     $secteur        = trim($_POST['secteur'] ?? '');
     $secteur_autre  = trim($_POST['secteur_autre'] ?? '');
@@ -45,27 +42,40 @@ if (isset($_POST['submit'])) {
     $cv_path   = null;
     $logo_path = null;
 
-    if (
-        empty($role) || !in_array($role, ['etudiant', 'entreprise']) ||
-        empty($email) || empty($password) || empty($confirm) ||
-        ($role === 'etudiant'   && (empty($nom) || empty($prenom))) ||
-        ($role === 'entreprise' && (empty($nom) || empty($nom_entreprise)))
-    ) {
+    // --- Validation des champs obligatoires avec messages spécifiques ---
+    $errors = [];
 
-        $error = "Veuillez remplir tous les champs requis.";
+    if (empty($role) || !in_array($role, ['etudiant', 'entreprise'])) {
+        $errors[] = "Veuillez sélectionner un type de compte.";
+    }
 
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if ($role === 'etudiant') {
+        if (empty($prenom)) { $errors[] = "Le prénom est obligatoire."; }
+        if (empty($nom))    { $errors[] = "Le nom est obligatoire."; }
+    }
 
-        $error = "Adresse email invalide.";
+    if ($role === 'entreprise') {
+        if (empty($nom))           { $errors[] = "Le nom du responsable est obligatoire."; }
+        if (empty($nom_entreprise)) { $errors[] = "Le nom de l'entreprise est obligatoire."; }
+    }
 
-    } elseif (strlen($password) < 6) {
+    if (empty($ville))    { $errors[] = "La ville est obligatoire."; }
+    if (empty($telephone)) { $errors[] = "Le téléphone est obligatoire."; }
+    if (empty($email))    { $errors[] = "L'adresse e-mail est obligatoire."; }
+    elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Adresse e-mail invalide.";
+    }
+    if (empty($password)) { $errors[] = "Le mot de passe est obligatoire."; }
+    elseif (strlen($password) < 6) {
+        $errors[] = "Le mot de passe doit contenir au moins 6 caractères.";
+    }
+    if (empty($confirm))  { $errors[] = "La confirmation du mot de passe est obligatoire."; }
+    elseif ($password !== $confirm) {
+        $errors[] = "Les mots de passe ne correspondent pas.";
+    }
 
-        $error = "Le mot de passe doit contenir au moins 6 caractères.";
-
-    } elseif ($password !== $confirm) {
-
-        $error = "Les mots de passe ne correspondent pas.";
-
+    if (!empty($errors)) {
+        $error = implode('<br>', $errors);
     } else {
 
         /* Email déjà utilisé ? */
@@ -115,6 +125,10 @@ if (isset($_POST['submit'])) {
 
                 $hash = password_hash($password, PASSWORD_DEFAULT);
 
+                // Générer un token de vérification d'email
+                $verificationToken = generateSecureToken();
+                $verificationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
                 // Pour un étudiant, nom_entreprise/secteur/description/logo restent NULL.
                 // Pour une entreprise, prenom/cv restent NULL.
                 if ($role === 'etudiant') {
@@ -129,12 +143,12 @@ if (isset($_POST['submit'])) {
 
                 $stmt = $conn->prepare("
                     INSERT INTO users
-                    (nom, prenom, nom_entreprise, email, mot_de_passe, telephone, ville, secteur, description, logo, cv, role)
+                    (nom, prenom, nom_entreprise, email, mot_de_passe, telephone, ville, secteur, description, logo, cv, role, email_verified, verification_token, verification_expires, last_verification_sent_at)
                     VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NOW())
                 ");
                 $stmt->bind_param(
-                    "ssssssssssss",
+                    "sssssssssssssss",
                     $nom,
                     $prenom,
                     $nom_entreprise,
@@ -146,18 +160,29 @@ if (isset($_POST['submit'])) {
                     $description,
                     $logo_path,
                     $cv_path,
-                    $role
+                    $role,
+                    $verificationToken,
+                    $verificationExpires
                 );
 
                 if ($stmt->execute()) {
+                    $user_id = $stmt->insert_id;
                     $mail_name = ($role === 'etudiant') ? "$prenom $nom" : $nom_entreprise;
-                    $emailSent = sendWelcomeEmail($email, $mail_name);
+
+                    // Envoyer l'e-mail de vérification
+                    $emailSent = sendVerificationEmail($email, $mail_name, $verificationToken);
 
                     if ($emailSent) {
-                        $success = "Compte créé avec succès. Un email de bienvenue a été envoyé.";
+                        $success = "Compte créé avec succès ! Un e-mail de vérification vous a été envoyé. 
+                                    <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
+                                    Se connecter</a>";
                     } else {
-                        $success = "Compte créé avec succès.";
+                        $success = "Compte créé avec succès ! Un e-mail de vérification va vous être envoyé.
+                                    <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
+                                    Se connecter</a>";
                     }
+                } else {
+                    $error = "Une erreur est survenue lors de la création du compte.";
                 }
 
                 $stmt->close();
@@ -230,7 +255,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 <div class="error"><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?></div>
 <?php } ?>
 
-<form method="POST" enctype="multipart/form-data" class="card reveal is-visible" id="form-inscription">
+<form method="POST" enctype="multipart/form-data" class="card reveal is-visible" id="form-inscription" novalidate>
+
+<div class="required-legend">
+    <span class="required-asterisk">*</span> Champs obligatoires
+</div>
 
 <label>Je suis</label>
 <div style="display:flex; gap:.75rem;">
@@ -245,11 +274,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 <!-- Champs étudiant -->
 <div id="champ-etudiant">
 
-    <label for="prenom">Prénom</label>
-    <input id="prenom" type="text" name="prenom" placeholder="Votre prénom">
+    <label for="prenom"><span class="required-asterisk">*</span> Prénom</label>
+    <input id="prenom" type="text" name="prenom" placeholder="Votre prénom" value="<?= e($_POST['prenom'] ?? '') ?>" required>
 
-    <label for="nom">Nom</label>
-    <input id="nom" type="text" name="nom" placeholder="Votre nom">
+    <label for="nom"><span class="required-asterisk">*</span> Nom</label>
+    <input id="nom" type="text" name="nom" placeholder="Votre nom" value="<?= e($_POST['nom'] ?? '') ?>" required>
 
     <label for="cv">CV (PDF, optionnel)</label>
     <input id="cv" type="file" name="cv" accept="application/pdf">
@@ -259,14 +288,14 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 <!-- Champs entreprise -->
 <div id="champ-entreprise" style="display:none;">
 
-    <label for="nom_contact">Nom du responsable</label>
-    <input id="nom_contact" type="text" name="nom_contact" placeholder="Nom de la personne de contact">
+    <label for="nom_contact"><span class="required-asterisk">*</span> Nom du responsable</label>
+    <input id="nom_contact" type="text" name="nom_contact" placeholder="Nom de la personne de contact" value="<?= e($_POST['nom_contact'] ?? '') ?>" required>
 
-    <label for="nom_entreprise">Nom de l'entreprise</label>
-    <input id="nom_entreprise" type="text" name="nom_entreprise" placeholder="Raison sociale">
+    <label for="nom_entreprise"><span class="required-asterisk">*</span> Nom de l'entreprise</label>
+    <input id="nom_entreprise" type="text" name="nom_entreprise" placeholder="Raison sociale" value="<?= e($_POST['nom_entreprise'] ?? '') ?>" required>
 
-        <label for="secteur">Secteur d'activité</label>
-    <select id="secteur" name="secteur">
+        <label for="secteur"><span class="required-asterisk">*</span> Secteur d'activité</label>
+    <select id="secteur" name="secteur" required>
         <option value="">Choisir</option>
         <option value="Développement Web"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Développement Web')?' selected':'' ?>>Développement Web</option>
         <option value="Développement Mobile"<?= (isset($_POST['secteur']) && $_POST['secteur']==='Développement Mobile')?' selected':'' ?>>Développement Mobile</option>
@@ -292,26 +321,26 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     </div>
 
     <label for="description">Description de l'entreprise</label>
-    <textarea id="description" name="description" rows="4" placeholder="Quelques mots sur votre entreprise…"></textarea>
+    <textarea id="description" name="description" rows="4" placeholder="Quelques mots sur votre entreprise…"><?= e($_POST['description'] ?? '') ?></textarea>
 
     <label for="logo">Logo (image, optionnel)</label>
     <input id="logo" type="file" name="logo" accept="image/png, image/jpeg, image/webp">
 
 </div>
 
-<label for="ville">Ville</label>
-<input id="ville" type="text" name="ville" placeholder="Casablanca">
+<label for="ville"><span class="required-asterisk">*</span> Ville</label>
+<input id="ville" type="text" name="ville" placeholder="Casablanca" value="<?= e($_POST['ville'] ?? '') ?>" required>
 
-<label for="telephone">Téléphone</label>
-<input id="telephone" type="tel" name="telephone" placeholder="06 00 00 00 00">
+<label for="telephone"><span class="required-asterisk">*</span> Téléphone</label>
+<input id="telephone" type="tel" name="telephone" placeholder="06 00 00 00 00" value="<?= e($_POST['telephone'] ?? '') ?>" required>
 
-<label for="email">Email</label>
-<input id="email" type="email" name="email" placeholder="vous@exemple.com" required>
+<label for="email"><span class="required-asterisk">*</span> Email</label>
+<input id="email" type="email" name="email" placeholder="vous@exemple.com" value="<?= e($_POST['email'] ?? '') ?>" required>
 
-<label for="password">Mot de passe</label>
+<label for="password"><span class="required-asterisk">*</span> Mot de passe</label>
 <input id="password" type="password" name="password" placeholder="6 caractères minimum" required>
 
-<label for="confirm_password">Confirmer le mot de passe</label>
+<label for="confirm_password"><span class="required-asterisk">*</span> Confirmer le mot de passe</label>
 <input id="confirm_password" type="password" name="confirm_password" placeholder="••••••••" required>
 
 <button type="submit" name="submit" class="btn">Créer mon compte</button>
@@ -355,6 +384,86 @@ Déjà inscrit ?
         secteurSelect.addEventListener('change', toggleSecteurAutre);
         toggleSecteurAutre();
     }
+})();
+
+// ---- Validation client du formulaire d'inscription ----
+(function() {
+    var form = document.getElementById('form-inscription');
+    if (!form) return;
+
+    // Fonction pour afficher une erreur sous un champ
+    function showFieldError(input, message) {
+        var parent = input.parentNode;
+        var existing = parent.querySelector('.field-error');
+        if (existing) existing.remove();
+
+        input.classList.add('input-error');
+        var error = document.createElement('div');
+        error.className = 'field-error';
+        error.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + message;
+        parent.appendChild(error);
+    }
+
+    function clearFieldError(input) {
+        input.classList.remove('input-error');
+        var parent = input.parentNode;
+        var existing = parent.querySelector('.field-error');
+        if (existing) existing.remove();
+    }
+
+    form.addEventListener('submit', function(e) {
+        var errors = [];
+        var role = form.querySelector('input[name="role"]:checked');
+        var roleValue = role ? role.value : '';
+        
+        // Nettoyer les anciennes erreurs
+        form.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+        form.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+
+        if (roleValue === 'etudiant') {
+            var prenom = document.getElementById('prenom');
+            var nom = document.getElementById('nom');
+            if (!prenom.value.trim()) { showFieldError(prenom, 'Le prénom est obligatoire.'); errors.push('prenom'); }
+            if (!nom.value.trim()) { showFieldError(nom, 'Le nom est obligatoire.'); errors.push('nom'); }
+        }
+
+        if (roleValue === 'entreprise') {
+            var nomContact = document.getElementById('nom_contact');
+            var nomEntreprise = document.getElementById('nom_entreprise');
+            var secteur = document.getElementById('secteur');
+            if (!nomContact.value.trim()) { showFieldError(nomContact, 'Le nom du responsable est obligatoire.'); errors.push('nom_contact'); }
+            if (!nomEntreprise.value.trim()) { showFieldError(nomEntreprise, 'Le nom de l\'entreprise est obligatoire.'); errors.push('nom_entreprise'); }
+            if (!secteur.value) { showFieldError(secteur, 'Le secteur est obligatoire.'); errors.push('secteur'); }
+        }
+
+        var ville = document.getElementById('ville');
+        var telephone = document.getElementById('telephone');
+        var email = document.getElementById('email');
+        var password = document.getElementById('password');
+        var confirm = document.getElementById('confirm_password');
+
+        if (!ville.value.trim()) { showFieldError(ville, 'La ville est obligatoire.'); errors.push('ville'); }
+        if (!telephone.value.trim()) { showFieldError(telephone, 'Le téléphone est obligatoire.'); errors.push('telephone'); }
+        if (!email.value.trim()) { showFieldError(email, 'L\'email est obligatoire.'); errors.push('email'); }
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) { showFieldError(email, 'Email invalide.'); errors.push('email'); }
+        if (!password.value) { showFieldError(password, 'Le mot de passe est obligatoire.'); errors.push('password'); }
+        else if (password.value.length < 6) { showFieldError(password, '6 caractères minimum.'); errors.push('password'); }
+        if (!confirm.value) { showFieldError(confirm, 'La confirmation est obligatoire.'); errors.push('confirm'); }
+        else if (password.value !== confirm.value) { showFieldError(confirm, 'Les mots de passe ne correspondent pas.'); errors.push('confirm'); }
+
+        if (errors.length > 0) {
+            e.preventDefault();
+            // Scroll to first error
+            var firstError = form.querySelector('.input-error');
+            if (firstError) firstError.focus();
+        }
+    });
+
+    // Effacer l'erreur quand l'utilisateur corrige le champ
+    form.querySelectorAll('input, select, textarea').forEach(function(input) {
+        input.addEventListener('input', function() { clearFieldError(this); });
+        input.addEventListener('change', function() { clearFieldError(this); });
+    });
 })();
 </script>
 

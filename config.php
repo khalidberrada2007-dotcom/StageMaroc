@@ -5,8 +5,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $host = getenv('MYSQL_ADDON_HOST') ?: 'localhost';
 $user = getenv('MYSQL_ADDON_USER') ?: 'root';
-$pass = getenv('MYSQL_ADDON_PASSWORD') ?: '';
-$db   = getenv('MYSQL_ADDON_DB') ?: 'stagemaroc';
+$pass = getenv('MYSQL_ADDON_PASSWORD') ?: 'Khalid@Mysql2026';
+$db   = getenv('MYSQL_ADDON_DB') ?: 'site_stages';
 $port = getenv('MYSQL_ADDON_PORT') ?: 3306;
 
 /* Connexion */

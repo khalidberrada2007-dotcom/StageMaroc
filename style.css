@@ -729,6 +729,44 @@ footer .footer-mark{ color: var(--gold); font-family: var(--font-mono); font-siz
 @media (min-width: 980px){
   #offers-grid{ grid-template-columns: repeat(3, 1fr); }
 }
+.required-asterisk {
+    color: var(--danger);
+    font-weight: 700;
+    margin-right: 0.1rem;
+}
+
+/* Style pour les champs invalides côté client */
+input.input-error,
+select.input-error,
+textarea.input-error {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 4px var(--danger-bg) !important;
+}
+
+/* Message d'erreur sous champ */
+.field-error {
+    color: var(--danger);
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    margin-top: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Légende des champs obligatoires */
+.required-legend {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.required-legend .required-asterisk {
+    font-size: 1rem;
+}
+
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5); display: flex; align-items: center;
