@@ -99,9 +99,15 @@ function nav_active($page, $page_actuelle) {
                 <a href="connexion.php" class="btn">
                     <i class="fa-solid fa-right-to-bracket"></i> Se connecter
                 </a>
-                <a href="connexion.php?resend_verification=1" class="btn btn-gold">
-                    <i class="fa-solid fa-envelope"></i> Renvoyer l'email
-                </a>
+                <?php if (!empty($user) && isset($user['email'])): ?>
+                    <a href="connexion.php?resend_verification=1&email=<?= urlencode($user['email']) ?>" class="btn btn-gold">
+                        <i class="fa-solid fa-envelope"></i> Renvoyer l'email
+                    </a>
+                <?php else: ?>
+                    <a href="connexion.php" class="btn btn-gold">
+                        <i class="fa-solid fa-envelope"></i> Renvoyer l'email
+                    </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 

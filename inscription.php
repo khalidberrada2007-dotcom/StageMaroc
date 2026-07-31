@@ -141,51 +141,58 @@ if (isset($_POST['submit'])) {
                     $cv_path = null;
                 }
 
-                $stmt = $conn->prepare("
+$stmt = $conn->prepare("
                     INSERT INTO users
                     (nom, prenom, nom_entreprise, email, mot_de_passe, telephone, ville, secteur, description, logo, cv, role, email_verified, verification_token, verification_expires, last_verification_sent_at)
                     VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NOW())
                 ");
-                $stmt->bind_param(
-                    "sssssssssssssss",
-                    $nom,
-                    $prenom,
-                    $nom_entreprise,
-                    $email,
-                    $hash,
-                    $telephone,
-                    $ville,
-                    $secteur,
-                    $description,
-                    $logo_path,
-                    $cv_path,
-                    $role,
-                    $verificationToken,
-                    $verificationExpires
-                );
 
-                if ($stmt->execute()) {
-                    $user_id = $stmt->insert_id;
-                    $mail_name = ($role === 'etudiant') ? "$prenom $nom" : $nom_entreprise;
-
-                    // Envoyer l'e-mail de vérification
-                    $emailSent = sendVerificationEmail($email, $mail_name, $verificationToken);
-
-                    if ($emailSent) {
-                        $success = "Compte créé avec succès ! Un e-mail de vérification vous a été envoyé. 
-                                    <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
-                                    Se connecter</a>";
-                    } else {
-                        $success = "Compte créé avec succès ! Un e-mail de vérification va vous être envoyé.
-                                    <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
-                                    Se connecter</a>";
-                    }
+                if (!$stmt) {
+                    error_log('Erreur préparation SQL inscription : ' . $conn->error);
+                    $error = "Une erreur interne est survenue. Veuillez réessayer plus tard.";
                 } else {
-                    $error = "Une erreur est survenue lors de la création du compte.";
-                }
+                    $stmt->bind_param(
+                        "ssssssssssssss",
+                        $nom,
+                        $prenom,
+                        $nom_entreprise,
+                        $email,
+                        $hash,
+                        $telephone,
+                        $ville,
+                        $secteur,
+                        $description,
+                        $logo_path,
+                        $cv_path,
+                        $role,
+                        $verificationToken,
+                        $verificationExpires
+                    );
 
-                $stmt->close();
+                    if ($stmt->execute()) {
+                        $user_id = $stmt->insert_id;
+                        $mail_name = ($role === 'etudiant') ? "$prenom $nom" : $nom_entreprise;
+
+                        // Envoyer l'e-mail de vérification
+                        $emailSent = sendVerificationEmail($email, $mail_name, $verificationToken);
+
+                        if ($emailSent) {
+                            $success = "Compte créé avec succès ! Un e-mail de vérification vous a été envoyé. 
+                                        <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
+                                        Se connecter</a>";
+                        } else {
+                            $success = "Compte créé avec succès ! Un e-mail de vérification va vous être envoyé.
+                                        <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
+                                        Se connecter</a>";
+                        }
+                    } else {
+                        error_log('Erreur exécution SQL inscription : ' . $stmt->error);
+                        $error = "Une erreur est survenue lors de la création du compte.";
+                    }
+
+                    $stmt->close();
+                }
             }
         }
     }
@@ -246,13 +253,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 <h2>Créer un compte</h2>
 
 <?php if($success!=""){ ?>
-<div class="success"><i class="fa-solid fa-circle-check"></i> <?= htmlspecialchars($success) ?>
+<div class="success"><i class="fa-solid fa-circle-check"></i> <?= $success ?>
 — <a href="connexion.php" style="color: inherit; font-weight: 700; text-decoration: underline;">Se connecter</a>
 </div>
 <?php } ?>
 
 <?php if($error!=""){ ?>
-<div class="error"><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?></div>
+<div class="error"><i class="fa-solid fa-circle-exclamation"></i> <?= $error ?></div>
 <?php } ?>
 
 <form method="POST" enctype="multipart/form-data" class="card reveal is-visible" id="form-inscription" novalidate>

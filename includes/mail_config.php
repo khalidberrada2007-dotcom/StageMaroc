@@ -4,7 +4,10 @@
  * 
  * Utilise PHPMailer pour l'envoi d'e-mails (code vérification, activation, etc.)
  * 
- * IMPORTANT : Remplacez les valeurs ci-dessous par vos identifiants SMTP réels.
+ * Configuration SMTP :
+ * - Variables d'environnement (Clever Cloud) : MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, MAIL_FROM, etc.
+ * - Variables locales (XAMPP) : modifiez directement les valeurs par défaut ci-dessous.
+ *   Pour Gmail : utilisez un mot de passe d'application (https://myaccount.google.com/apppasswords)
  * 
  * Hébergement courant :
  * - Gmail : host=smtp.gmail.com, port=587, SMTPSecure=tls
@@ -21,6 +24,7 @@ use PHPMailer\PHPMailer\Exception;
 
 /**
  * Crée et configure une instance de PHPMailer avec les paramètres SMTP.
+ * Supporte les variables d'environnement (Clever Cloud) et les valeurs par défaut (local).
  *
  * @return PHPMailer
  */
@@ -28,17 +32,20 @@ function getMailer(): PHPMailer
 {
     $mail = new PHPMailer(true);
 
-    // --- Configuration SMTP (à modifier) ---
-    $smtp_host       = 'smtp.gmail.com';        // Ex: smtp.gmail.com
-    $smtp_port       = 587;                      // 587 (TLS) ou 465 (SSL)
-    $smtp_encryption = PHPMailer::ENCRYPTION_STARTTLS; // 'tls' ou 'ssl'
-    $smtp_username   = 'votre.email@gmail.com';  // Adresse e-mail complète
-    $smtp_password   = 'votre-mot-de-passe-application'; // Mot de passe d'application
-    $from_email      = 'noreply@stagemaroc.ma';  // Adresse d'envoi
-    $from_name       = 'StageMaroc';              // Nom d'affichage
+    // --- Configuration SMTP : priorité aux variables d'environnement (Clever Cloud) ---
+    $smtp_host       = getenv('MAIL_HOST') ?: 'smtp.gmail.com';
+    $smtp_port       = getenv('MAIL_PORT') ? (int)getenv('MAIL_PORT') : 587;
+    $smtp_encryption = getenv('MAIL_ENCRYPTION') ?: PHPMailer::ENCRYPTION_STARTTLS;
+    $smtp_username   = getenv('MAIL_USER') ?: 'votre.email@gmail.com';
+    $smtp_password   = getenv('MAIL_PASS') ?: 'votre-mot-de-passe-application';
+    $from_email      = getenv('MAIL_FROM') ?: 'noreply@stagemaroc.ma';
+    $from_name       = getenv('MAIL_FROM_NAME') ?: 'StageMaroc';
+
+    // Mode debug : activer via SMTP_DEBUG=1 dans l'environnement (Clever Cloud) ou en local
+    $debugMode = getenv('SMTP_DEBUG') ?: false;
+    $mail->SMTPDebug = $debugMode ? SMTP::DEBUG_SERVER : SMTP::DEBUG_OFF;
 
     // --- Paramètres du serveur ---
-    $mail->SMTPDebug  = SMTP::DEBUG_OFF;          // Mettre DEBUG_SERVER pour déboguer
     $mail->isSMTP();
     $mail->Host       = $smtp_host;
     $mail->SMTPAuth   = true;
@@ -57,6 +64,29 @@ function getMailer(): PHPMailer
 }
 
 /**
+ * Construit l'URL de base du site de manière fiable.
+ * Compatible avec les sous-dossiers (ex: /StageMaroc/) et la racine (Clever Cloud).
+ *
+ * @return string URL de base (ex: "https://stagemaroc.cleverapps.io" ou "http://localhost/StageMaroc")
+ */
+function getBaseUrl(): string
+{
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+
+    // Si on est à la racine, scriptDir = "/"
+    // Si on est dans un sous-dossier, scriptDir = "/StageMaroc"
+    // On nettoie les "/.." parasites
+    $baseUrl = $protocol . '://' . $host;
+    if ($scriptDir !== '/' && $scriptDir !== '\\') {
+        $baseUrl .= rtrim($scriptDir, '/\\');
+    }
+
+    return $baseUrl;
+}
+
+/**
  * Envoie un e-mail de vérification d'adresse e-mail (lien d'activation).
  *
  * @param string $toEmail Destinataire
@@ -70,10 +100,8 @@ function sendVerificationEmail(string $toEmail, string $toName, string $token): 
         $mail = getMailer();
         $mail->addAddress($toEmail, $toName);
 
-        // Lien d'activation
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $baseUrl = $protocol . '://' . $host . dirname($_SERVER['SCRIPT_NAME']) . '/..';
+        // Lien d'activation construit proprement
+        $baseUrl = getBaseUrl();
         $activationLink = $baseUrl . '/verification.php?token=' . urlencode($token);
 
         $mail->Subject = 'Activez votre compte StageMaroc';

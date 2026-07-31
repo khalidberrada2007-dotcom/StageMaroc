@@ -22,50 +22,64 @@ if (isset($_GET['resend_verification']) && $_GET['resend_verification'] === '1' 
     
     // Vérifier que l'utilisateur existe et n'est PAS vérifié
     $stmt = $conn->prepare("SELECT id, nom, prenom, nom_entreprise, role, email_verified, last_verification_sent_at FROM users WHERE email = ?");
-    $stmt->bind_param('s', $resendEmail);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-    
-    if ($user && $user['email_verified'] == 0) {
-        // Vérifier le délai (60s)
-        $canResend = true;
-        if (!empty($user['last_verification_sent_at'])) {
-            $lastSent = strtotime($user['last_verification_sent_at']);
-            $diff = time() - $lastSent;
-            if ($diff < 60) {
-                $canResend = false;
-                $wait = 60 - $diff;
-                $erreur = "Veuillez patienter $wait seconde(s) avant de renvoyer l'e-mail d'activation.";
-            }
-        }
-        
-        if ($canResend) {
-            $userName = ($user['role'] === 'entreprise') ? $user['nom_entreprise'] : ($user['prenom'] . ' ' . $user['nom']);
-            $token = generateSecureToken();
-            $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
-            $now = date('Y-m-d H:i:s');
-            
-            // Mettre à jour le token
-            $stmt = $conn->prepare("UPDATE users SET verification_token = ?, verification_expires = ?, last_verification_sent_at = ? WHERE id = ?");
-            $stmt->bind_param('sssi', $token, $expiresAt, $now, $user['id']);
-            $stmt->execute();
-            $stmt->close();
-            
-            // Envoyer l'e-mail
-            $sent = sendVerificationEmail($resendEmail, $userName, $token);
-            
-            if ($sent) {
-                $erreur = ''; // Effacer l'erreur précédente
-                // Créer un message de succès
-                echo '<div class="success" style="max-width: 450px; margin: 1rem auto;"><i class="fa-solid fa-circle-check"></i> Un nouvel e-mail d\'activation a été envoyé. Vérifiez votre boîte de réception.</div>';
-            } else {
-                $erreur = "Erreur lors de l'envoi de l'e-mail. Veuillez réessayer plus tard.";
-            }
-        }
+    if (!$stmt) {
+        error_log('Erreur préparation SQL resend verification : ' . $conn->error);
+        $erreur = "Erreur serveur. Veuillez réessayer plus tard.";
     } else {
-        $erreur = "Compte introuvable ou déjà vérifié.";
+        $stmt->bind_param('s', $resendEmail);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        $stmt->close();
+        
+        if ($user && $user['email_verified'] == 0) {
+            // Vérifier le délai (60s)
+            $canResend = true;
+            if (!empty($user['last_verification_sent_at'])) {
+                $lastSent = strtotime($user['last_verification_sent_at']);
+                $diff = time() - $lastSent;
+                if ($diff < 60) {
+                    $canResend = false;
+                    $wait = 60 - $diff;
+                    $erreur = "Veuillez patienter $wait seconde(s) avant de renvoyer l'e-mail d'activation.";
+                }
+            }
+            
+            if ($canResend) {
+                $userName = ($user['role'] === 'entreprise') ? $user['nom_entreprise'] : ($user['prenom'] . ' ' . $user['nom']);
+                $token = generateSecureToken();
+                $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+                $now = date('Y-m-d H:i:s');
+                
+                // Mettre à jour le token
+                $stmt = $conn->prepare("UPDATE users SET verification_token = ?, verification_expires = ?, last_verification_sent_at = ? WHERE id = ?");
+                if (!$stmt) {
+                    error_log('Erreur préparation SQL update token : ' . $conn->error);
+                    $erreur = "Erreur serveur. Veuillez réessayer plus tard.";
+                } else {
+                    $stmt->bind_param('sssi', $token, $expiresAt, $now, $user['id']);
+                    if (!$stmt->execute()) {
+                        error_log('Erreur exécution SQL update token : ' . $stmt->error);
+                        $erreur = "Erreur serveur. Veuillez réessayer plus tard.";
+                    } else {
+                        // Envoyer l'e-mail
+                        $sent = sendVerificationEmail($resendEmail, $userName, $token);
+                        
+                        if ($sent) {
+                            $erreur = ''; // Effacer l'erreur précédente
+                            // Créer un message de succès
+                            echo '<div class="success" style="max-width: 450px; margin: 1rem auto;"><i class="fa-solid fa-circle-check"></i> Un nouvel e-mail d\'activation a été envoyé. Vérifiez votre boîte de réception.</div>';
+                        } else {
+                            error_log('Échec envoi e-mail vérification à ' . $resendEmail);
+                            $erreur = "Erreur lors de l'envoi de l'e-mail. Veuillez réessayer plus tard.";
+                        }
+                    }
+                    $stmt->close();
+                }
+            }
+        } else {
+            $erreur = "Compte introuvable ou déjà vérifié.";
+        }
     }
 }
 
@@ -151,9 +165,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="card">
         <h2 style="text-align: center; margin-bottom: 1.5rem;">Connexion</h2>
         
-        <?php if (!empty($erreur)): ?>
+<?php if (!empty($erreur)): ?>
             <div class="error" style="background: #fce8e6; color: #c5221f; padding: 0.8rem; border-radius: 4px; margin-bottom: 1rem;">
-                <i class="fa-solid fa-triangle-exclamation"></i> <?= htmlspecialchars($erreur) ?>
+                <i class="fa-solid fa-triangle-exclamation"></i> <?= $erreur ?>
             </div>
         <?php endif; ?>
 
