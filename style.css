@@ -244,7 +244,7 @@ nav a.btn-nav.btn-nav-danger:hover{ background: #fff; color: var(--terracotta); 
   padding: .4rem;
   width: 40px; height: 40px;
   position: relative;
-  z-index: 110;
+  z-index: 210;
 }
 .nav-toggle span{
   display: block;

@@ -40,25 +40,6 @@ function nav_active($page, $page_actuelle){
     return $page === $page_actuelle ? ' class="active" aria-current="page"' : '';
 }
 
-// Mes candidatures (étudiant)
-$mes_candidatures = null;
-if ($role === 'etudiant') {
-    $sql_c = "
-        SELECT c.id AS candidature_id, c.statut AS candidature_statut, c.date_candidature,
-               o.id AS offre_id, o.titre AS offre_titre,
-               u.nom_entreprise
-        FROM candidatures c
-        INNER JOIN offres o ON o.id = c.offre_id
-        INNER JOIN users u ON u.id = o.entreprise_id
-        WHERE c.etudiant_id = ?
-        ORDER BY c.date_candidature DESC
-    ";
-    $stmt_c = $conn->prepare($sql_c);
-    $stmt_c->bind_param("i", $user_id);
-    $stmt_c->execute();
-    $mes_candidatures = $stmt_c->get_result();
-    $stmt_c->close();
-}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -116,38 +97,6 @@ if ($role === 'etudiant') {
                     <?php endif; ?>
                 </p>
             </div>
-            <hr style="border: 0; height: 1px; background: var(--line);">
-            <div>
-                <h3 style="color: var(--brand); font-size: 1.3rem; margin-bottom: 1rem;"><i class="fa-solid fa-paper-plane"></i> Mes candidatures</h3>
-                <?php if ($mes_candidatures && $mes_candidatures->num_rows > 0): ?>
-                    <?php while ($cand = $mes_candidatures->fetch_assoc()): ?>
-                        <?php
-                            $cand_badge = 'var(--gold); color: var(--brand-dark);';
-                            $cand_label = 'En attente';
-                            if ($cand['candidature_statut'] === 'acceptee') { $cand_badge = 'var(--success-bg); color: var(--success);'; $cand_label = 'Acceptée'; }
-                            elseif ($cand['candidature_statut'] === 'refusee') { $cand_badge = 'var(--danger-bg); color: var(--danger);'; $cand_label = 'Refusée'; }
-                        ?>
-                        <div style="border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: .8rem; background: var(--bg);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap;">
-                                <a href="details_offre.php?id=<?= $cand['offre_id'] ?>" style="font-weight: 600; color: var(--brand);">
-                                    <?= htmlspecialchars($cand['offre_titre']) ?>
-                                </a>
-                                <span class="badge" style="background: <?= $cand_badge ?>;"><?= $cand_label ?></span>
-                            </div>
-                            <p style="font-size: .85rem; color: var(--muted); margin-top: .4rem; margin-bottom: 0;">
-                                <i class="fa-solid fa-building"></i> <?= htmlspecialchars($cand['nom_entreprise']) ?>
-                                &nbsp;·&nbsp;<i class="fa-solid fa-calendar-days"></i> <?= date('d/m/Y', strtotime($cand['date_candidature'])) ?>
-                            </p>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p style="color: var(--muted); font-style: italic; font-size: .9rem;">
-                        Vous n'avez pas encore postulé à une offre.
-                        <a href="index.php" style="color: var(--brand); font-weight: 600;">Parcourir les offres</a>
-                    </p>
-                <?php endif; ?>
-            </div>
-
         <?php elseif ($_SESSION['role'] === 'admin'): ?>
             <div>
                 <h3 style="color: var(--brand); font-size: 1.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-user-shield"></i> Compte Administrateur</h3>
