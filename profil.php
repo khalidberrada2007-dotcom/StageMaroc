@@ -4,6 +4,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 include 'config.php';
+require_once 'includes/functions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -16,6 +17,92 @@ if ($user_id === 0) {
     header("Location: connexion.php");
     exit();
 }
+
+/* ---------------------------------------------------------------------
+ * Gestion du CV (étudiant) : téléverser / remplacer / supprimer
+ * Le CV reste facultatif lors de l'inscription ; l'étudiant peut le
+ * gérer à tout moment depuis son profil.
+ * --------------------------------------------------------------------- */
+if ($role === 'etudiant' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // --- Suppression du CV ---
+    if (isset($_POST['action']) && $_POST['action'] === 'delete_cv') {
+        $stmt = $conn->prepare("SELECT cv FROM users WHERE id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $old_cv = $row['cv'];
+            if (!empty($old_cv) && file_exists($old_cv)) {
+                @unlink($old_cv);
+            }
+        }
+        $stmt->close();
+
+        $stmt = $conn->prepare("UPDATE users SET cv = NULL WHERE id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->close();
+
+        redirectWithFlash('profil.php', 'Votre CV a été supprimé.', 'success');
+    }
+
+    // --- Téléversement / remplacement du CV ---
+    if (isset($_POST['action']) && $_POST['action'] === 'upload_cv') {
+
+        if (!isset($_FILES['cv']) || $_FILES['cv']['error'] === UPLOAD_ERR_NO_FILE) {
+            redirectWithFlash('profil.php', 'Aucun fichier sélectionné.', 'error');
+        }
+
+        if ($_FILES['cv']['error'] !== UPLOAD_ERR_OK) {
+            redirectWithFlash('profil.php', 'Une erreur est survenue lors du téléversement.', 'error');
+        }
+
+        $ext = strtolower(pathinfo($_FILES['cv']['name'], PATHINFO_EXTENSION));
+
+        if ($ext !== 'pdf') {
+            redirectWithFlash('profil.php', 'Le CV doit être un fichier PDF.', 'error');
+        }
+
+        if ($_FILES['cv']['size'] > 5 * 1024 * 1024) {
+            redirectWithFlash('profil.php', 'Le CV ne doit pas dépasser 5 Mo.', 'error');
+        }
+
+        // Supprimer l'ancien CV avant d'enregistrer le nouveau
+        $stmt = $conn->prepare("SELECT cv FROM users WHERE id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $old_cv = $row['cv'];
+            if (!empty($old_cv) && file_exists($old_cv)) {
+                @unlink($old_cv);
+            }
+        }
+        $stmt->close();
+
+        if (!is_dir('uploads/cv')) {
+            mkdir('uploads/cv', 0755, true);
+        }
+
+        $filename = uniqid('cv_') . '.pdf';
+        $destination = 'uploads/cv/' . $filename;
+
+        if (move_uploaded_file($_FILES['cv']['tmp_name'], $destination)) {
+            $stmt = $conn->prepare("UPDATE users SET cv = ? WHERE id = ?");
+            $stmt->bind_param("si", $destination, $user_id);
+            $stmt->execute();
+            $stmt->close();
+
+            redirectWithFlash('profil.php', 'Votre CV a bien été téléversé.', 'success');
+        }
+
+        redirectWithFlash('profil.php', 'Impossible d\'enregistrer le fichier. Réessayez.', 'error');
+    }
+}
+
+// Récupérer un éventuel message flash
+$flash = getFlash();
 
 // Préparer la requête du connecté
 $query = "SELECT * FROM users WHERE id = ?";
@@ -79,6 +166,13 @@ function nav_active($page, $page_actuelle){
 <main id="contenu" class="container" style="padding-top: 3.5rem; max-width: 700px;">
     <h2>Mon Profil (Espace <?= ucfirst($_SESSION['role']) ?>)</h2>
 
+    <?php if ($flash !== null): ?>
+        <div class="<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" style="max-width: 700px;">
+            <i class="fa-solid <?= $flash['type'] === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation' ?>"></i>
+            <?= htmlspecialchars($flash['message']) ?>
+        </div>
+    <?php endif; ?>
+
     <div class="card reveal is-visible" style="display: flex; flex-direction: column; gap: 1.5rem;">
         
         <?php if ($_SESSION['role'] === 'etudiant'): ?>
@@ -89,13 +183,40 @@ function nav_active($page, $page_actuelle){
             </div>
             <hr style="border: 0; height: 1px; background: var(--line);">
             <div>
-                <p><b><i class="fa-solid fa-file-pdf" style="color: var(--terracotta);"></i> Mon CV :</b> 
-                    <?php if(!empty($user['cv'])): ?>
+                <h3 style="color: var(--brand); font-size: 1.1rem; margin-bottom: .8rem;"><i class="fa-solid fa-file-pdf" style="color: var(--terracotta);"></i> Mon CV</h3>
+
+                <?php if(!empty($user['cv'])): ?>
+                    <p>
+                        <i class="fa-solid fa-file-pdf" style="color: var(--terracotta);"></i>
+                        <b>CV actuel :</b>
                         <a href="<?= htmlspecialchars($user['cv']) ?>" target="_blank" class="badge" style="text-decoration: underline;">Voir le CV PDF</a>
-                    <?php else: ?>
-                        <span style="color: var(--muted); font-style: italic;">Aucun CV téléversé</span>
-                    <?php endif; ?>
-                </p>
+                    </p>
+                <?php else: ?>
+                    <p style="color: var(--muted); font-style: italic; margin-bottom: 1rem;">
+                        <i class="fa-solid fa-circle-info"></i> Vous n'avez pas encore téléversé de CV.
+                        Vous pouvez l'ajouter à tout moment (fichier PDF, 5 Mo maximum).
+                    </p>
+                <?php endif; ?>
+
+                <form method="POST" enctype="multipart/form-data" action="profil.php" style="display: flex; flex-direction: column; gap: .8rem; margin-top: .5rem;">
+                    <input type="hidden" name="action" value="upload_cv">
+                    <label for="cv"><?= !empty($user['cv']) ? 'Remplacer mon CV' : 'Choisir un fichier PDF' ?></label>
+                    <div style="display: flex; gap: .6rem; flex-wrap: wrap; align-items: center;">
+                        <input id="cv" type="file" name="cv" accept="application/pdf" style="flex: 1; min-width: 220px;" required>
+                        <button type="submit" class="btn btn-sm" style="margin-top: 0; background: var(--gold); color: var(--brand-dark);">
+                            <i class="fa-solid fa-upload"></i> <?= !empty($user['cv']) ? 'Remplacer' : 'Téléverser mon CV' ?>
+                        </button>
+                    </div>
+                </form>
+
+                <?php if(!empty($user['cv'])): ?>
+                    <form method="POST" action="profil.php" style="margin-top: .75rem;">
+                        <input type="hidden" name="action" value="delete_cv">
+                        <button type="submit" class="btn btn-sm btn-danger confirm-action" data-msg="Êtes-vous sûr de vouloir supprimer votre CV ?">
+                            <i class="fa-solid fa-trash"></i> Supprimer mon CV
+                        </button>
+                    </form>
+                <?php endif; ?>
             </div>
         <?php elseif ($_SESSION['role'] === 'admin'): ?>
             <div>

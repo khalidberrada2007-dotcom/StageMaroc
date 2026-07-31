@@ -1,12 +1,11 @@
-# TODO — Suppression candidatures étudiants + correctif bouton (X) menu mobile
+# TODO — Téléversement du CV après inscription (profil étudiant)
 
 ## Objectif
-1. Empêcher les étudiants de postuler : ils ne font que consulter les détails des offres.
-2. Corriger le bouton (X) de fermeture du menu mobile.
+Le CV étant facultatif lors de l'inscription, permettre à l'étudiant de téléverser / remplacer / supprimer son CV depuis son profil (`profil.php`).
 
 ## Étapes
-- [x] Étape 1 : `details_offre.php` — supprimer le bloc PHP candidatures, l'affichage message/statut et le bouton « Postuler »
-- [x] Étape 2 : `profil.php` — supprimer la section « Mes candidatures » côté étudiant
-- [x] Étape 3 : `style.css` — corriger le z-index du `.nav-toggle` (110 → 210) pour que le X ferme le menu
+- [x] Étape 1 : Analyse des fichiers (`inscription.php`, `profil.php`, `functions.php`, `candidatures.php`)
+- [x] Étape 2 : `profil.php` — ajouter `require_once 'includes/functions.php'` + logique PHP (upload / suppression CV)
+- [x] Étape 3 : `profil.php` — remplacer la section « Mon CV » par un bloc complet (flash message, statut, formulaire upload/remplacer, bouton supprimer)
 - [x] Étape 4 : Validation PHP (`php -l`) sur les fichiers modifiés
 
