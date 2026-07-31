@@ -152,7 +152,7 @@ ul{ list-style: none; margin: 0; padding: 0; }
 .site-header{
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 300;
   height: var(--header-h);
   display: flex;
   align-items: center;

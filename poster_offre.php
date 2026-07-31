@@ -78,6 +78,7 @@ if (!function_exists('nav_active')) {
     <nav id="primary-nav">
         <a href="index.php"<?= nav_active('index.php', $page_actuelle) ?>>Accueil</a>
         <a href="poster_offre.php"<?= nav_active('poster_offre.php', $page_actuelle) ?>>Publier une offre</a>
+        <a href="candidatures.php"<?= nav_active('candidatures.php', $page_actuelle) ?>>Candidatures</a>
         <a href="profil.php"<?= nav_active('profil.php', $page_actuelle) ?>><i class="fa-solid fa-user"></i> Mon Profil</a>
         <a href="deconnexion.php" class="confirm-action" data-msg="Êtes-vous sûr de vouloir vous déconnecter ?">Déconnexion</a>
     </nav>

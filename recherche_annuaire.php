@@ -59,6 +59,9 @@ function nav_active($page, $page_actuelle){
     <nav id="primary-nav">
         <a href="index.php">Accueil</a>
         <a href="recherche_annuaire.php"<?= nav_active('recherche_annuaire.php', $page_actuelle) ?>>Annuaire</a>
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'entreprise'): ?>
+            <a href="candidatures.php">Candidatures</a>
+        <?php endif; ?>
         <?php if (isset($_SESSION['role'])): ?>
             <a href="profil.php">Mon Profil</a>
             <a href="deconnexion.php" class="confirm-action" data-msg="Êtes-vous sûr de vouloir vous déconnecter ?">Déconnexion</a>

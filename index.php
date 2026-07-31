@@ -81,6 +81,9 @@ function nav_active($page, $page_actuelle){
     <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'entreprise'): ?>
         <a href="poster_offre.php"<?= nav_active('poster_offre.php', $page_actuelle) ?>>Publier une offre</a>
     <?php endif; ?>
+    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'entreprise'): ?>
+        <a href="candidatures.php"<?= nav_active('candidatures.php', $page_actuelle) ?>>Candidatures</a>
+    <?php endif; ?>
     
     <?php if (isset($_SESSION['role'])): ?>
         <a href="profil.php"<?= nav_active('profil.php', $page_actuelle) ?>><i class="fa-solid fa-user"></i> Mon Profil (<?= htmlspecialchars($_SESSION['nom_affiche']) ?>)</a>

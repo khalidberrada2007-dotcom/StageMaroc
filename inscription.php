@@ -217,6 +217,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 
 <nav id="primary-nav">
     <a href="index.php"<?= nav_active('index.php', $page_actuelle) ?>>Accueil</a>
+    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'entreprise'): ?>
+        <a href="candidatures.php"<?= nav_active('candidatures.php', $page_actuelle) ?>>Candidatures</a>
+    <?php endif; ?>
     <?php if (isset($_SESSION['role'])): ?>
         <a href="profil.php"<?= nav_active('profil.php', $page_actuelle) ?>>Mon Profil</a>
         <a href="deconnexion.php" class="confirm-action" data-msg="Êtes-vous sûr de vouloir vous déconnecter ?">Déconnexion</a>

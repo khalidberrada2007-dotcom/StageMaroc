@@ -14,6 +14,7 @@
     toggle.addEventListener("click", function () {
       var isOpen = nav.classList.toggle("is-open");
       toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      toggle.setAttribute("aria-label", isOpen ? "Fermer le menu" : "Ouvrir le menu");
       document.body.style.overflow = isOpen ? "hidden" : "";
     });
 
@@ -73,16 +74,23 @@ function showCustomConfirm(message, onConfirm) {
     };
 }
 
-// Déconnexion avec une seule confirmation stylisée
+// Confirmation stylisée (liens OU boutons de formulaire)
 if (document.querySelectorAll('.confirm-action').length) {
     document.querySelectorAll('.confirm-action').forEach(function (element) {
         element.addEventListener('click', function (e) {
             e.preventDefault();
+            const isButton = this.tagName === 'BUTTON' || this.type === 'submit';
             const targetUrl = this.getAttribute('href');
-            const msg = this.getAttribute('data-msg') || 'Voulez-vous vraiment vous déconnecter ?';
+            const form = this.closest('form');
+            const msg = this.getAttribute('data-msg') || 'Voulez-vous vraiment effectuer cette action ?';
 
             showCustomConfirm(msg, function () {
-                window.location.href = targetUrl;
+                if (isButton && form) {
+                    // Soumettre le formulaire après confirmation
+                    form.submit();
+                } else {
+                    window.location.href = targetUrl;
+                }
             });
         });
     });
