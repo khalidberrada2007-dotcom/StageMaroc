@@ -34,4 +34,48 @@ $conn->query("CREATE TABLE IF NOT EXISTS candidatures (
     KEY idx_offre (offre_id),
     KEY idx_etudiant (etudiant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+/* ---------------------------------------------------------------------
+ * Migration auto-réparatrice pour la table `candidatures`.
+ *
+ * Problème : si la table existait déjà avec un ANCIEN schéma (par ex.
+ * une colonne `user_id` au lieu de `etudiant_id`), la commande
+ * `CREATE TABLE IF NOT EXISTS` ci-dessus ne modifie PAS une table
+ * existante. Les requêtes de profil.php / details_offre.php /
+ * candidatures.php utilisant `etudiant_id` échouent alors avec
+ * "Unknown column 'c.etudiant_id'".
+ *
+ * Correctif : on vérifie les colonnes réelles de la table et on aligne
+ * le schéma automatiquement (renommage de `user_id` si présent, sinon
+ * ajout de `etudiant_id`), puis on garantit l'index `idx_etudiant`.
+ * --------------------------------------------------------------------- */
+try {
+    $colsCandidatures = $conn->query("SHOW COLUMNS FROM candidatures");
+    if ($colsCandidatures !== false) {
+        $hasEtudiantId = false;
+        $hasUserId     = false;
+        while ($colC = $colsCandidatures->fetch_assoc()) {
+            if ($colC['Field'] === 'etudiant_id') { $hasEtudiantId = true; }
+            if ($colC['Field'] === 'user_id')     { $hasUserId     = true; }
+        }
+
+        if (!$hasEtudiantId) {
+            if ($hasUserId) {
+                // Ancien schéma : renommer user_id -> etudiant_id (conserve les données)
+                $conn->query("ALTER TABLE candidatures CHANGE COLUMN user_id etudiant_id INT NOT NULL");
+            } else {
+                // Colonne absente : l'ajouter
+                $conn->query("ALTER TABLE candidatures ADD COLUMN etudiant_id INT NOT NULL AFTER id");
+            }
+        }
+
+        // Garantir l'index sur etudiant_id
+        $idxEtudiant = $conn->query("SHOW INDEX FROM candidatures WHERE Key_name = 'idx_etudiant'");
+        if ($idxEtudiant === false || $idxEtudiant->num_rows === 0) {
+            $conn->query("ALTER TABLE candidatures ADD INDEX idx_etudiant (etudiant_id)");
+        }
+    }
+} catch (Exception $e) {
+    error_log('Migration candidatures ignorée : ' . $e->getMessage());
+}
 ?>

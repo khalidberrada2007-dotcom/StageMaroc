@@ -14,3 +14,22 @@
 - [x] Étape 5 : Vérifier qu'il ne reste aucune référence aux fichiers supprimés
 - [x] Étape 6 : Validation PHP (php -l) sur les fichiers modifiés
 
+---
+
+# TODO — Correction « Unknown column 'c.etudiant_id' » (migration candidatures)
+
+## Problème
+- La table `candidatures` existait en base avec un ANCIEN schéma sans colonne `etudiant_id`.
+- `CREATE TABLE IF NOT EXISTS` ne modifie pas une table existante → erreurs :
+  - `profil.php:56` — `WHERE c.etudiant_id = ?`
+  - `details_offre.php:61` — `WHERE offre_id = ? AND etudiant_id = ?`
+  - `candidatures.php` — jointure `users u ON u.id = c.etudiant_id`
+
+## Correctif appliqué
+- [x] Ajout d'une **migration auto-réparatrice** dans `config.php` :
+  - `SHOW COLUMNS FROM candidatures` pour inspecter le schéma réel.
+  - Si `etudiant_id` manque → renommage de `user_id` si présent, sinon `ADD COLUMN etudiant_id`.
+  - Garantie de l'index `idx_etudiant`.
+- [x] Validation PHP (`php -l`) : aucune erreur de syntaxe.
+
+
