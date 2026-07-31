@@ -3,7 +3,8 @@
  * Étape 1 — Mot de passe oublié : saisie de l'adresse e-mail
  * 
  * Vérifie que l'e-mail existe, génère un code à 6 chiffres,
- * l'envoie par e-mail et redirige vers la page de vérification du code.
+ * le stocke en session (mode démo — e-mail désactivé) et
+ * redirige vers la page de vérification du code.
  */
 
 ini_set('display_errors', 1);
@@ -12,7 +13,6 @@ error_reporting(E_ALL);
 
 include 'config.php';
 require_once 'includes/functions.php';
-require_once 'includes/mail_config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -73,32 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             $stmt->execute();
             $stmt->close();
 
-            // Récupérer le nom de l'utilisateur pour l'e-mail
-            $stmt = $conn->prepare("SELECT nom, prenom, nom_entreprise, role FROM users WHERE email = ?");
-            $stmt->bind_param('s', $email);
-            $stmt->execute();
-            $userResult = $stmt->get_result();
-            $user = $userResult->fetch_assoc();
-            $stmt->close();
-
-            $userName = ($user['role'] === 'entreprise') ? $user['nom_entreprise'] : ($user['prenom'] . ' ' . $user['nom']);
-
-            // Envoyer l'e-mail avec le code
-            $emailSent = sendResetCodeEmail($email, $userName, $code);
-
-            if ($emailSent) {
-                // Stocker l'email en session pour la prochaine étape
-                $_SESSION['reset_email'] = $email;
-                header('Location: verifier_code.php');
-                exit();
-            } else {
-                $error = "Erreur lors de l'envoi de l'e-mail. Veuillez réessayer plus tard.";
-                // Supprimer le code si l'envoi a échoué
-                $stmt = $conn->prepare("DELETE FROM password_resets WHERE email = ? AND code = ?");
-                $stmt->bind_param('ss', $email, $code);
-                $stmt->execute();
-                $stmt->close();
-            }
+            // Mode démo (envoi d'e-mail SMTP désactivé) :
+            // on stocke le code en session pour l'afficher sur la page suivante.
+            $_SESSION['reset_email'] = $email;
+            $_SESSION['reset_demo_code'] = $code;
+            header('Location: verifier_code.php');
+            exit();
         }
     }
 }

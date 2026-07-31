@@ -2,17 +2,12 @@
 /**
  * Configuration SMTP centralisée pour StageMaroc
  * 
- * Utilise PHPMailer pour l'envoi d'e-mails (code vérification, activation, etc.)
+ * Fichier conservé pour une future réactivation.
+ * Actuellement, l'application fonctionne en mode démo (code affiché à l'écran).
  * 
  * Configuration SMTP :
  * - Variables d'environnement (Clever Cloud) : MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, MAIL_FROM, etc.
  * - Variables locales (XAMPP) : modifiez directement les valeurs par défaut ci-dessous.
- *   Pour Gmail : utilisez un mot de passe d'application (https://myaccount.google.com/apppasswords)
- * 
- * Hébergement courant :
- * - Gmail : host=smtp.gmail.com, port=587, SMTPSecure=tls
- * - Outlook : host=smtp.office365.com, port=587, SMTPSecure=tls
- * - Yandex : host=smtp.yandex.com, port=465, SMTPSecure=ssl
  */
 
 // --- Autoload PHPMailer ---
@@ -61,87 +56,6 @@ function getMailer(): PHPMailer
     $mail->WordWrap = 78;
 
     return $mail;
-}
-
-/**
- * Construit l'URL de base du site de manière fiable.
- * Compatible avec les sous-dossiers (ex: /StageMaroc/) et la racine (Clever Cloud).
- *
- * @return string URL de base (ex: "https://stagemaroc.cleverapps.io" ou "http://localhost/StageMaroc")
- */
-function getBaseUrl(): string
-{
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
-
-    // Si on est à la racine, scriptDir = "/"
-    // Si on est dans un sous-dossier, scriptDir = "/StageMaroc"
-    // On nettoie les "/.." parasites
-    $baseUrl = $protocol . '://' . $host;
-    if ($scriptDir !== '/' && $scriptDir !== '\\') {
-        $baseUrl .= rtrim($scriptDir, '/\\');
-    }
-
-    return $baseUrl;
-}
-
-/**
- * Envoie un e-mail de vérification d'adresse e-mail (lien d'activation).
- *
- * @param string $toEmail Destinataire
- * @param string $toName  Nom du destinataire
- * @param string $token   Token de vérification unique
- * @return bool           True si envoyé, sinon false
- */
-function sendVerificationEmail(string $toEmail, string $toName, string $token): bool
-{
-    try {
-        $mail = getMailer();
-        $mail->addAddress($toEmail, $toName);
-
-        // Lien d'activation construit proprement
-        $baseUrl = getBaseUrl();
-        $activationLink = $baseUrl . '/verification.php?token=' . urlencode($token);
-
-        $mail->Subject = 'Activez votre compte StageMaroc';
-        $mail->Body    = "
-            <div style='font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e1e6e0;'>
-                <div style='background: #0B6E4F; padding: 24px 32px; text-align: center;'>
-                    <h1 style='color: #E3A73B; margin: 0; font-size: 24px;'>StageMaroc</h1>
-                    <p style='color: #ffffff; margin: 4px 0 0; font-size: 13px; opacity: 0.85;'>Plateforme de stages · Maroc</p>
-                </div>
-                <div style='padding: 32px;'>
-                    <h2 style='color: #12211D; margin: 0 0 16px; font-size: 20px;'>Bonjour $toName,</h2>
-                    <p style='color: #5B6D67; line-height: 1.6; margin: 0 0 20px;'>
-                        Merci de vous être inscrit sur <strong>StageMaroc</strong>. Pour activer votre compte et commencer à utiliser la plateforme, veuillez cliquer sur le lien ci-dessous :
-                    </p>
-                    <div style='text-align: center; margin: 28px 0;'>
-                        <a href='$activationLink' style='display: inline-block; background: #0B6E4F; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-size: 16px; font-weight: 600;'>
-                            Activer mon compte
-                        </a>
-                    </div>
-                    <p style='color: #5B6D67; font-size: 13px; line-height: 1.5; margin: 0 0 8px;'>
-                        Ce lien est valable <strong>24 heures</strong>. Si vous n'avez pas créé de compte sur StageMaroc, ignorez simplement cet e-mail.
-                    </p>
-                    <p style='color: #5B6D67; font-size: 13px; line-height: 1.5; margin: 0;'>
-                        Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :<br>
-                        <span style='color: #0B6E4F; word-break: break-all;'>$activationLink</span>
-                    </p>
-                </div>
-                <div style='background: #082E28; padding: 16px 32px; text-align: center;'>
-                    <p style='color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;'>© " . date('Y') . " StageMaroc — Tous droits réservés</p>
-                </div>
-            </div>
-        ";
-        $mail->AltBody = "Bonjour $toName,\n\nMerci de vous être inscrit sur StageMaroc. Pour activer votre compte, copiez et collez ce lien dans votre navigateur :\n\n$activationLink\n\nCe lien est valable 24 heures.\n\nSi vous n'avez pas créé de compte, ignorez cet e-mail.";
-
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        error_log('Erreur envoi e-mail vérification : ' . $mail->ErrorInfo);
-        return false;
-    }
 }
 
 /**

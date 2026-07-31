@@ -1,25 +1,28 @@
-# Plan de Correction — Bug HTTP 500 Inscription
+# Plan — Simplification du système d'authentification
 
-## ✅ Étape 1: Corriger `inscription.php` (TERMINÉ)
-- [x] Corriger bind_param (15 types → 14 variables) → **CAUSE DU HTTP 500**
-- [x] Remplacer htmlspecialchars($success) par $success
-- [x] Remplacer htmlspecialchars($error) par $error
-- [x] Ajouter error_log() pour toutes les erreurs SQL
-- [x] Ajouter vérification d'erreur prepare() et execute()
+## Objectif
+Supprimer la vérification d'e-mail lors de l'inscription et conserver uniquement le flux "Mot de passe oublié" (code 6 chiffres, 15 min, 5 tentatives max, renvoi après 60 s).
 
-## ✅ Étape 2: Corriger `includes/mail_config.php` (TERMINÉ)
-- [x] Nouvelle fonction getBaseUrl() - construction URL fiable (sans `/..`)
-- [x] Support variables d'environnement pour SMTP (Clever Cloud)
-- [x] Mode debug via env var SMTP_DEBUG
-- [x] Journalisation améliorée des erreurs SMTP
+## Étapes
+- [x] Étape 1 : Modifier `connexion.php` — supprimer le bloc `resend_verification` et le contrôle `email_verified`
+- [x] Étape 2 : Modifier `inscription.php` — créer le compte immédiatement (`email_verified=1`), supprimer token + e-mail d'activation
+- [x] Étape 3 : Supprimer `verification.php`
+- [x] Étape 4 : Modifier `includes/mail_config.php` — supprimer `sendVerificationEmail()` et `getBaseUrl()` (devenu inutile)
+- [x] Étape 5 : Modifier `includes/functions.php` — supprimer `generateSecureToken()`, `canResendEmail()`, `markEmailSent()`, `getResendCooldownMessage()`
+- [x] Étape 6 : Nettoyer la base de données (`UPDATE users SET email_verified = 1, verification_token = NULL, verification_expires = NULL, last_verification_sent_at = NULL`)
+- [x] Étape 7 : Tester en conditions réelles (inscription, connexion, mot de passe oublié, envoi du code)
 
-## ✅ Étape 3: Corriger `verification.php` (TERMINÉ)
-- [x] Ajouter &email= dans le lien "Renvoyer l'email"
+## Résumé des modifications
+- **inscription.php** : Le compte est créé immédiatement avec `email_verified=1`. Plus de token de vérification, plus d'appel à `sendVerificationEmail()`.
+- **connexion.php** : Plus de vérification de `email_verified` lors de la connexion. Suppression du bloc `resend_verification`. Suppression de l'include de `mail_config.php`.
+- **verification.php** : Fichier supprimé (devenu inutile).
+- **includes/functions.php** : Suppression des fonctions `generateSecureToken()`, `canResendEmail()`, `markEmailSent()`, `getResendCooldownMessage()`.
+- **includes/mail_config.php** : Suppression de `sendVerificationEmail()` et `getBaseUrl()`.
+- **_test_mail.php** : Fichier supprimé (fichier de test devenu inutile).
+- **mdp_oublie.php / verifier_code.php / reinitialiser_mdp.php** : Inchangés — le flux mot de passe oublié (code 6 chiffres, 15 min, 5 tentatives, renvoi 60s) est conservé.
 
-## ✅ Étape 4: Améliorer `connexion.php` (TERMINÉ)
-- [x] Ajouter error_log() pour les échecs SQL
-- [x] Ajouter vérification d'erreur prepare() et execute()
-
-## ✅ Étape 5: Nettoyage (TERMINÉ)
-- [x] Supprimer test_env.php
+## Vérifications
+- Tous les fichiers modifiés passent la validation syntaxique PHP (`php -l`).
+- Aucune référence restante à `sendVerificationEmail`, `generateSecureToken`, `canResendEmail`, `markEmailSent`, `getResendCooldownMessage`, `resend_verification`, `verification.php`, `verification_token` ou `getBaseUrl` dans le code.
+- La colonne `email_verified` est toujours présente dans la table `users` (pour compatibilité), mais n'est plus utilisée pour bloquer la connexion.
 

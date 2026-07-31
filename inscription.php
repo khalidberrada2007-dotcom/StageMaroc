@@ -1,7 +1,6 @@
 <?php
 include 'config.php';
 require_once 'includes/functions.php';
-require_once 'includes/mail_config.php';
 
 if (isset($_SESSION['entreprise_id']) || isset($_SESSION['etudiant_id'])) {
     header("Location: index.php");
@@ -125,10 +124,6 @@ if (isset($_POST['submit'])) {
 
                 $hash = password_hash($password, PASSWORD_DEFAULT);
 
-                // Générer un token de vérification d'email
-                $verificationToken = generateSecureToken();
-                $verificationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
-
                 // Pour un étudiant, nom_entreprise/secteur/description/logo restent NULL.
                 // Pour une entreprise, prenom/cv restent NULL.
                 if ($role === 'etudiant') {
@@ -143,9 +138,9 @@ if (isset($_POST['submit'])) {
 
 $stmt = $conn->prepare("
                     INSERT INTO users
-                    (nom, prenom, nom_entreprise, email, mot_de_passe, telephone, ville, secteur, description, logo, cv, role, email_verified, verification_token, verification_expires, last_verification_sent_at)
+                    (nom, prenom, nom_entreprise, email, mot_de_passe, telephone, ville, secteur, description, logo, cv, role, email_verified)
                     VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NOW())
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                 ");
 
                 if (!$stmt) {
@@ -153,7 +148,7 @@ $stmt = $conn->prepare("
                     $error = "Une erreur interne est survenue. Veuillez réessayer plus tard.";
                 } else {
                     $stmt->bind_param(
-                        "ssssssssssssss",
+                        "ssssssssssss",
                         $nom,
                         $prenom,
                         $nom_entreprise,
@@ -165,27 +160,13 @@ $stmt = $conn->prepare("
                         $description,
                         $logo_path,
                         $cv_path,
-                        $role,
-                        $verificationToken,
-                        $verificationExpires
+                        $role
                     );
 
                     if ($stmt->execute()) {
-                        $user_id = $stmt->insert_id;
-                        $mail_name = ($role === 'etudiant') ? "$prenom $nom" : $nom_entreprise;
-
-                        // Envoyer l'e-mail de vérification
-                        $emailSent = sendVerificationEmail($email, $mail_name, $verificationToken);
-
-                        if ($emailSent) {
-                            $success = "Compte créé avec succès ! Un e-mail de vérification vous a été envoyé. 
-                                        <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
-                                        Se connecter</a>";
-                        } else {
-                            $success = "Compte créé avec succès ! Un e-mail de vérification va vous être envoyé.
-                                        <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
-                                        Se connecter</a>";
-                        }
+                        $success = "Compte créé avec succès ! Vous pouvez maintenant vous connecter.
+                                    <a href='connexion.php' style='color: inherit; font-weight: 700; text-decoration: underline;'>
+                                    Se connecter</a>";
                     } else {
                         error_log('Erreur exécution SQL inscription : ' . $stmt->error);
                         $error = "Une erreur est survenue lors de la création du compte.";

@@ -20,17 +20,6 @@ function generateNumericCode(int $length = 6): string
 }
 
 /**
- * Génère un token sécurisé hexadécimal (SHA-256).
- *
- * @param int $bytes Nombre d'octets aléatoires (défaut: 32 → 64 caractères hex)
- * @return string Token hexadécimal
- */
-function generateSecureToken(int $bytes = 32): string
-{
-    return bin2hex(random_bytes($bytes));
-}
-
-/**
  * Vérifie que l'utilisateur est connecté. Redirige vers connexion.php si non connecté.
  */
 function requireLogin(): void
@@ -131,46 +120,5 @@ function emailExists(mysqli $conn, string $email): bool
 function cleanInput(string $input): string
 {
     return trim(strip_tags($input));
-}
-
-/**
- * Vérifie le délai minimum entre deux envois d'e-mails (anti-spam).
- * Stocke le timestamp du dernier envoi en session.
- *
- * @param string $key Clé de session unique (ex: 'last_reset_email', 'last_verification_email')
- * @param int $delaySeconds Délai minimum en secondes (défaut: 60)
- * @return bool True si l'envoi est autorisé
- */
-function canResendEmail(string $key, int $delaySeconds = 60): bool
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    $last = $_SESSION[$key] ?? 0;
-    return (time() - $last) >= $delaySeconds;
-}
-
-/**
- * Enregistre l'horodatage du dernier envoi d'e-mail.
- *
- * @param string $key Clé de session
- */
-function markEmailSent(string $key): void
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    $_SESSION[$key] = time();
-}
-
-/**
- * Génère le message d'erreur pour une tentative de renvoi trop rapide.
- *
- * @param int $delaySeconds Délai en secondes
- * @return string Message d'erreur
- */
-function getResendCooldownMessage(int $delaySeconds = 60): string
-{
-    return "Veuillez patienter $delaySeconds secondes avant de renvoyer un e-mail.";
 }
 

@@ -84,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             unset($_SESSION['reset_email']);
             unset($_SESSION['reset_code_valid']);
             unset($_SESSION['reset_code_id']);
+            unset($_SESSION['reset_demo_code']);
 
             // Rediriger vers la connexion avec un message de succès
             $_SESSION['flash'] = [

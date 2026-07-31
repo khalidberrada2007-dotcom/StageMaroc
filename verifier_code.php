@@ -130,6 +130,15 @@ function nav_active($page, $page_actuelle) {
             Saisissez le code à 6 chiffres envoyé à <strong><?= e($email) ?></strong>
         </p>
 
+        <?php if (!empty($_SESSION['reset_demo_code'])): ?>
+            <div class="success" style="text-align: center; margin-bottom: 1rem;">
+                <i class="fa-solid fa-circle-info"></i> Mode démo (e-mail désactivé) : votre code est
+                <strong style="font-size: 1.4rem; letter-spacing: 4px; font-family: monospace;">
+                    <?= e($_SESSION['reset_demo_code']) ?>
+                </strong>
+            </div>
+        <?php endif; ?>
+
         <?php if (!empty($error)): ?>
             <div class="error">
                 <i class="fa-solid fa-circle-exclamation"></i> <?= e($error) ?>
