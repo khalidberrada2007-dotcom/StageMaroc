@@ -234,9 +234,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 <h2>Créer un compte</h2>
 
 <?php if($success!=""){ ?>
-<div class="success"><i class="fa-solid fa-circle-check"></i> <?= $success ?>
-— <a href="connexion.php" style="color: inherit; font-weight: 700; text-decoration: underline;">Se connecter</a>
-</div>
+<div class="success"><i class="fa-solid fa-circle-check"></i> <?= $success ?></div>
 <?php } ?>
 
 <?php if($error!=""){ ?>
